@@ -1,0 +1,23 @@
+@use './normalize.scss';
+@use './elementui.scss';
+@use './vxetable.scss';
+
+a {
+  color: #0052D9;
+  text-decoration: none;
+  cursor: pointer;
+  margin-left: 5px;
+}
+
+a:hover,
+a:active {
+  color: #0052D9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: #f5f5f5;
+}
