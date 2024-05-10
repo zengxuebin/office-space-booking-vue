@@ -11,7 +11,7 @@
               <span class="title">北区-软件学院 3F 504</span>
             </el-col>
             <el-col :span="1">
-              <el-button size="large" :icon="Star" circle />
+              <el-button type="primary" size="large" :icon="Star" circle @click="centerDialogVisible = true" />
             </el-col>
           </el-row>
           <el-row>
@@ -48,17 +48,50 @@
         <el-text>占座率88%（拥挤）</el-text>
       </el-progress>
     </el-card>
-    <div class="li"></div>
+    
+    
+    <el-dialog
+    v-model="centerDialogVisible"
+    title="取消预约"
+    width="500"
+    align-center
+  >
+    <span>你将取消收藏该共享空间，是否继续？</span>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="calcelDialog">取消</el-button>
+        <el-button type="primary" @click="handleFavorite">
+          确认
+        </el-button>
+      </div>
+    </template>
+  </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
 const url = '/src/assets/images/bar.jpg'
 
 import {
   Star,
 } from '@element-plus/icons-vue'
 
+const centerDialogVisible = ref(false)
+
+const calcelDialog = () => {
+  centerDialogVisible.value = false
+  ElMessage('你取消了该操作') 
+}
+
+const handleFavorite = () => {
+  centerDialogVisible.value = false
+  ElMessage({
+    message: '取消收藏成功！是不爱了吗？',
+    type: 'success',
+  })
+}
 </script>
 
 <style lang="scss" scoped>

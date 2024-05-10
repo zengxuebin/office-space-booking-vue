@@ -78,6 +78,11 @@ const routes = [
         path: '/pendingAppointment',
         name: 'pendingAppointment',
         component: () => import('@/views/PendingAppointment.vue'),
+      },
+      {
+        path: '/favorite',
+        name: 'favorite',
+        component: () => import('@/views/Favorite.vue'),
       }
     ]
   }

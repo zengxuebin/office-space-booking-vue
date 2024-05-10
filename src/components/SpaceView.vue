@@ -7,8 +7,11 @@
         </el-aside>
         <el-main>
           <el-row>
-            <el-col :span="24">
+            <el-col :span="23">
               <span class="title">北区-软件学院 3F 504</span>
+            </el-col>
+            <el-col :span="1">
+              <el-button size="large" :icon="Star" circle @click="favorite" />
             </el-col>
           </el-row>
           <el-row>
@@ -43,8 +46,20 @@
 </template>
 
 <script setup lang="ts">
+import { ElMessage } from 'element-plus'
+
 const url = '/src/assets/images/bar.jpg'
 
+import {
+  Star,
+} from '@element-plus/icons-vue'
+
+const favorite = () => {
+  ElMessage({
+    message: '收藏成功！可在“我的收藏”查看和管理哦～',
+    type: 'success',
+  })
+}
 </script>
 
 <style lang="scss" scoped>
