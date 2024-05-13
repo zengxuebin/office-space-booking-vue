@@ -4,10 +4,6 @@ export const managerRoutes = [
   {
     path: '/index',
     name: 'index',
-    meta: {
-      title: '首页',
-      icon: 'vxe-icon-home'
-    },
     component: () => import('@/layout/Index.vue'),
     children: [
       {
@@ -16,9 +12,26 @@ export const managerRoutes = [
         hidden: false,
         meta: {
           title: '首页',
-          icon: 'vxe-icon-home'
+          icon: 'vxe-icon-home-fill'
         },
         component: () => import('@/views/manager/Index.vue')
+      },
+    ],
+  },
+  {
+    path: '/audit',
+    name: 'audit',
+    component: () => import('@/layout/Index.vue'),
+    children: [
+      {
+        path: '/audit/space',
+        name: 'auditSpace',
+        hidden: false,
+        meta: {
+          title: '预约审核',
+          icon: 'vxe-icon-envelope-open-fill'
+        },
+        component: () => import('@/views/manager/Audit.vue')
       },
     ],
   },
@@ -28,7 +41,7 @@ export const managerRoutes = [
     hidden: false,
     meta: {
       title: '共享空间管理',
-      icon: 'vxe-icon-sort'
+      icon: 'vxe-icon-company'
     },
     component: () => import('@/layout/Index.vue'),
     children: [
@@ -62,6 +75,106 @@ export const managerRoutes = [
         },
         component: () => import('@/views/manager/space/SpaceEquipment.vue')
       },
+      {
+        path: '/spaceManager/location',
+        name: 'location',
+        hidden: false,
+        meta: {
+          title: '空间位置管理',
+          icon: 'vxe-icon-location-fill'
+        },
+        component: () => import('@/views/manager/space/SpaceLocation.vue')
+      },
+    ]
+  },
+  {
+    path: '/creditScore',
+    name: 'creditScore',
+    hidden: false,
+    component: () => import('@/layout/Index.vue'),
+    children: [
+      {
+        path: '/creditScore/manager',
+        name: 'spaceAudit',
+        hidden: false,
+        meta: {
+          title: '信誉分管理',
+          icon: 'vxe-icon-chart-line'
+        },
+        component: () => import('@/views/manager/CreditScore.vue')
+      },
+    ]
+  },
+  {
+    path: '/account',
+    name: 'account',
+    hidden: false,
+    component: () => import('@/layout/Index.vue'),
+    children: [
+      {
+        path: '/account/manager',
+        name: 'account',
+        hidden: false,
+        meta: {
+          title: '账户管理',
+          icon: 'vxe-icon-success-circle-fill'
+        },
+        component: () => import('@/views/manager/Account.vue')
+      },
+    ]
+  },
+  {
+    path: '/favorite',
+    name: 'favorite',
+    hidden: false,
+    component: () => import('@/layout/Index.vue'),
+    children: [
+      {
+        path: '/favorite/manager',
+        name: 'favorite',
+        hidden: false,
+        meta: {
+          title: '用户收藏管理',
+          icon: 'vxe-icon-star-fill'
+        },
+        component: () => import('@/views/manager/Favorite.vue')
+      },
+    ]
+  },
+  {
+    path: '/transaction',
+    name: 'transaction',
+    hidden: false,
+    component: () => import('@/layout/Index.vue'),
+    children: [
+      {
+        path: '/transaction/manager',
+        name: 'transaction',
+        hidden: false,
+        meta: {
+          title: '充值管理',
+          icon: 'vxe-icon-unlock-fill'
+        },
+        component: () => import('@/views/manager/Transaction.vue')
+      },
+    ]
+  },
+  {
+    path: '/order',
+    name: 'order',
+    hidden: false,
+    component: () => import('@/layout/Index.vue'),
+    children: [
+      {
+        path: '/order/manager',
+        name: 'order',
+        hidden: false,
+        meta: {
+          title: '订单管理',
+          icon: 'vxe-icon-goods-fill'
+        },
+        component: () => import('@/views/manager/Order.vue')
+      },
     ]
   },
   {
@@ -70,7 +183,7 @@ export const managerRoutes = [
     hidden: false,
     meta: {
       title: '系统管理',
-      icon: 'vxe-icon-setting'
+      icon: 'vxe-icon-setting-fill'
     },
     component: () => import('@/layout/Index.vue'),
     children: [
