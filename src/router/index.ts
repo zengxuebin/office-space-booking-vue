@@ -64,6 +64,58 @@ export const managerRoutes = [
       },
     ]
   },
+  {
+    path: '/system',
+    name: 'system',
+    hidden: false,
+    meta: {
+      title: '系统管理',
+      icon: 'vxe-icon-setting'
+    },
+    component: () => import('@/layout/Index.vue'),
+    children: [
+      {
+        path: '/system/user',
+        name: 'user',
+        hidden: false,
+        meta: {
+          title: '用户管理',
+          icon: 'vxe-icon-user'
+        },
+        component: () => import('@/views/manager/system/User.vue')
+      },
+      {
+        path: '/system/menu',
+        name: 'menu',
+        hidden: false,
+        meta: {
+          title: '字典管理',
+          icon: 'vxe-icon-menu'
+        },
+        component: () => import('@/views/manager/system/Dict.vue')
+      },
+      {
+        path: '/system/role',
+        name: 'role',
+        hidden: false,
+        meta: {
+          title: '角色管理',
+          icon: 'vxe-icon-user-fill'
+        },
+        component: () => import('@/views/manager/system/Role.vue')
+      },
+      {
+        path: '/system/dept',
+        name: 'dept',
+        hidden: false,
+        meta: {
+          title: '部门管理',
+          icon: 'vxe-icon-flow-branch'
+        },
+        component: () => import('@/views/manager/system/Dept.vue')
+      },
+    ]
+  },
 ]
 
 const routes = [
