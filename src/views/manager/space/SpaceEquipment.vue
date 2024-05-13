@@ -1,6 +1,6 @@
 <template>
   <div>
-    首页
+    空间设备管理
   </div>
 </template>
 

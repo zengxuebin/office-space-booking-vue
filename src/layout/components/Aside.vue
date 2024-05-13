@@ -44,9 +44,14 @@ const appStore = useAppStore()
 const routers = managerRoutes
 console.log(routers);
 
-
 const collapse = computed(() => appStore.collapse === 'true' ? true : false)
-const currentPath = computed(() => useRoute().path)
+const currentPath = computed(() => {
+  if (useRoute()) {
+    return useRoute().path
+  } else {
+    return ''
+  }
+})
 
 const handleOpen = (key: string, keyPath: string[]) => {
   console.log(key, keyPath)

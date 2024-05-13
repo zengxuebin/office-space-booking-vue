@@ -1,6 +1,6 @@
 <template>
   <div>
-    首页
+    共享空间分类管理
   </div>
 </template>
 

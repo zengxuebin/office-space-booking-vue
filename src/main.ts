@@ -20,6 +20,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 }
 
 app.use(createPinia())
+console.log(router.options.routes)
 app.use(router)
 
 app.use(ElementPlus, {

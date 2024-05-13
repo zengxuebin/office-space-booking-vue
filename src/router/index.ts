@@ -2,8 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 export const managerRoutes = [
   {
-    path: '/manager/index',
-    name: 'Index',
+    path: '/index',
+    name: 'index',
     meta: {
       title: '首页',
       icon: 'vxe-icon-home'
@@ -11,14 +11,56 @@ export const managerRoutes = [
     component: () => import('@/layout/Index.vue'),
     children: [
       {
-        path: '/manager/index',
-        name: 'Index',
+        path: '/index',
+        name: 'index',
         hidden: false,
         meta: {
           title: '首页',
           icon: 'vxe-icon-home'
         },
         component: () => import('@/views/manager/Index.vue')
+      },
+    ],
+  },
+  {
+    path: '/spaceManager',
+    name: 'spaceManager',
+    hidden: false,
+    meta: {
+      title: '共享空间管理',
+      icon: 'vxe-icon-sort'
+    },
+    component: () => import('@/layout/Index.vue'),
+    children: [
+      {
+        path: '/spaceManager/space',
+        name: 'Collect',
+        hidden: false,
+        meta: {
+          title: '空间管理',
+          icon: 'vxe-icon-cloud-upload'
+        },
+        component: () => import('@/views/manager/space/SpaceManager.vue')
+      },
+      {
+        path: '/spaceManager/category',
+        name: 'Location',
+        hidden: false,
+        meta: {
+          title: '空间类别管理',
+          icon: 'vxe-icon-location-fill'
+        },
+        component: () => import('@/views/manager/space/SpaceCategory.vue')
+      },
+      {
+        path: '/spaceManager/equipment',
+        name: 'equipment',
+        hidden: false,
+        meta: {
+          title: '空间设备管理',
+          icon: 'vxe-icon-flag-fill'
+        },
+        component: () => import('@/views/manager/space/SpaceEquipment.vue')
       },
     ]
   },

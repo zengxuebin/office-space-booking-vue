@@ -1,7 +1,7 @@
 <template>
   <el-container>
     <el-header class="header">
-      <!-- <MenuTitle></MenuTitle> -->
+      <MenuTitle></MenuTitle>
     </el-header>
     <el-main class="main">
       <router-view v-slot="{ Component, route }">
@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-// import MenuTitle from "@/components/MenuTitle.vue"
+import MenuTitle from '@/layout/components/MenuTitle.vue'
 </script>
 
 <style lang="scss" scoped>
