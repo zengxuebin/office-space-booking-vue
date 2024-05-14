@@ -21,6 +21,10 @@ export const managerRoutes = [
   {
     path: '/audit',
     name: 'audit',
+    meta: {
+      title: '审核管理',
+      icon: 'vxe-icon-unlock-fill'
+    },
     component: () => import('@/layout/Index.vue'),
     children: [
       {
@@ -28,10 +32,20 @@ export const managerRoutes = [
         name: 'auditSpace',
         hidden: false,
         meta: {
-          title: '预约审核',
+          title: '审核预约',
           icon: 'vxe-icon-envelope-open-fill'
         },
-        component: () => import('@/views/manager/Audit.vue')
+        component: () => import('@/views/manager/audit/Audit.vue')
+      },
+      {
+        path: '/audit/query',
+        name: 'auditQuery',
+        hidden: false,
+        meta: {
+          title: '审核查询',
+          icon: 'vxe-icon-search'
+        },
+        component: () => import('@/views/manager/audit/Query.vue')
       },
     ],
   },
@@ -98,7 +112,7 @@ export const managerRoutes = [
         name: 'spaceAudit',
         hidden: false,
         meta: {
-          title: '信誉分管理',
+          title: '信誉分查询',
           icon: 'vxe-icon-chart-line'
         },
         component: () => import('@/views/manager/CreditScore.vue')
@@ -116,7 +130,7 @@ export const managerRoutes = [
         name: 'account',
         hidden: false,
         meta: {
-          title: '账户管理',
+          title: '账户查询',
           icon: 'vxe-icon-success-circle-fill'
         },
         component: () => import('@/views/manager/Account.vue')
@@ -134,7 +148,7 @@ export const managerRoutes = [
         name: 'favorite',
         hidden: false,
         meta: {
-          title: '用户收藏管理',
+          title: '用户收藏查询',
           icon: 'vxe-icon-star-fill'
         },
         component: () => import('@/views/manager/Favorite.vue')
@@ -152,7 +166,7 @@ export const managerRoutes = [
         name: 'transaction',
         hidden: false,
         meta: {
-          title: '充值管理',
+          title: '充值查询',
           icon: 'vxe-icon-unlock-fill'
         },
         component: () => import('@/views/manager/Transaction.vue')
@@ -170,7 +184,7 @@ export const managerRoutes = [
         name: 'order',
         hidden: false,
         meta: {
-          title: '订单管理',
+          title: '订单查询',
           icon: 'vxe-icon-goods-fill'
         },
         component: () => import('@/views/manager/Order.vue')
@@ -206,16 +220,6 @@ export const managerRoutes = [
           icon: 'vxe-icon-menu'
         },
         component: () => import('@/views/manager/system/Dict.vue')
-      },
-      {
-        path: '/system/role',
-        name: 'role',
-        hidden: false,
-        meta: {
-          title: '角色管理',
-          icon: 'vxe-icon-user-fill'
-        },
-        component: () => import('@/views/manager/system/Role.vue')
       },
       {
         path: '/system/dept',
