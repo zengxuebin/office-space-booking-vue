@@ -28,26 +28,20 @@ export const useUserStore = defineStore('user', () => {
     })
   }
 
-  // /**
-  //  * 获取用户信息
-  //  * @returns 用户信息
-  //  */
-  // const getUserInfo = () => {
-  //   return new Promise((resolve, reject) => {
-  //     getInfo().then(res => {
-  //       console.log(res);
-  //       if (res.roles && res.roles.length > 0) {
-  //         roles.value = res.roles
-  //         permissions.value = res.permissions
-  //         dept.value = res.dept
-  //       }
-  //       user.value = res.user
-  //       resolve(res)
-  //     }).catch(error => {
-  //       reject(error)
-  //     })
-  //   })
-  // }
+  /**
+   * 获取用户信息
+   * @returns 用户信息
+   */
+  const getUserInfo = () => {
+    return new Promise((resolve, reject) => {
+      getInfo().then(res => {
+        console.log(res);
+        resolve(res)
+      }).catch(error => {
+        reject(error)
+      })
+    })
+  }
 
   /**
    * 退出登录

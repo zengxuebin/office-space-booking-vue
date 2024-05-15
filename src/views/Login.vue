@@ -51,9 +51,10 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
-// import router from '@/router'
+import router from '@/router'
+import useUserStore from '@/stores/user'
 
-// const userStore = useUserStore()
+const userStore = useUserStore()
 
 const loginRef = ref<FormInstance>()
 
@@ -64,8 +65,7 @@ const loginForm = reactive({
 
 const rules = reactive<FormRules>({
   username: [{ required: true, trigger: "blur", message: "请输入您的账号" }],
-  password: [{ required: true, trigger: "blur", message: "请输入您的密码" }],
-  code: [{ required: true, trigger: "change", message: "请输入验证码" }]
+  password: [{ required: true, trigger: "blur", message: "请输入您的密码" }]
 })
 
 // 验证码地址
@@ -73,29 +73,25 @@ const loading = ref(false)
 
 const handleLogin = (formEl: FormInstance | undefined) => {
   if (!formEl) return
-  // formEl.validate((valid) => {
-  //   if (valid) {
-  //     loading.value = true
-  //     console.log('submit!')
-  //     // 密码加密
-  //     const userForm = reactive({
-  //       username: loginForm.username,
-  //       password: encrypt(loginForm.password),
-  //       code: loginForm.code,
-  //       uuid: loginForm.uuid
-  //     })
-  //     userStore.loginUser(userForm).then(() => {
-  //       console.log("登陆成功");
-  //       router.push('/index')
-  //     }).catch(() => {
-  //       loading.value = false
-  //       getCode()
-  //     })
-  //   } else {
-  //     console.log('error submit!')
-  //     return false
-  //   }
-  // })
+  formEl.validate((valid) => {
+    if (valid) {
+      loading.value = true
+      console.log('submit!')
+      const userForm = reactive({
+        username: loginForm.username,
+        password: loginForm.password,
+      })
+      userStore.loginUser(userForm).then(() => {
+        console.log("登陆成功");
+        router.push('/index')
+      }).catch(() => {
+        loading.value = false
+      })
+    } else {
+      console.log('error submit!')
+      return false
+    }
+  })
 }
 </script>
 

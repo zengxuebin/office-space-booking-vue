@@ -41,7 +41,7 @@ service.interceptors.response.use(res => {
   // 未设置状态码则默认成功状态
   const code = res.data.code;
   // 获取错误信息
-  const msg = res.data.msg;
+  const msg = res.data.message;
 
   if (code === 401) {
     useUserStore().logoutUser()

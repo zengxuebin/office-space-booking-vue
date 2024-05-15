@@ -16,8 +16,8 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     proxy: {
-      '/weather-monitor': {
-        target: 'http://localhost:8080/osbs/',
+      '/osbs': {
+        target: 'http://localhost:8080/osbs',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/osbs/, '')
       }

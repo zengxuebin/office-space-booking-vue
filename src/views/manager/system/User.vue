@@ -6,10 +6,31 @@
         <vxe-button status="danger" icon="vxe-icon-delete" @click="deleteData">删除</vxe-button>
       </template>
       <template #operate="{ row }">
-        <vxe-button status="info" icon="vxe-icon-edit" @click="editRowEvent(row)">编辑</vxe-button>
+        <vxe-button status="info" icon="vxe-icon-edit" @click="editData(row)">编辑</vxe-button>
         <vxe-button status="danger" icon="vxe-icon-delete" @click="removeRowEvent(row)">删除</vxe-button>
       </template>
     </vxe-grid>
+
+    <el-dialog v-model="dialogFormVisible" :title=title width="500" align-center>
+      <el-form :model="form">
+        <el-form-item label="Promotion name" :label-width="formLabelWidth">
+          <el-input v-model="form.name" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="Zones" :label-width="formLabelWidth">
+          <el-select v-model="form.deptId" placeholder="Please select a zone">
+            <el-option v-for="item in depts" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogFormVisible = false">取消</el-button>
+          <el-button type="primary" @click="dialogFormVisible = false">
+            确认
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -17,8 +38,32 @@
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { onMounted, reactive, ref } from 'vue'
 import type { VXETable, VxeGridInstance, VxeGridProps } from 'vxe-table'
+import { getPageUser } from '@/api/system/user'
+import { getDeptOption } from '@/api/option'
+
+const dialogFormVisible = ref(false)
+const title = ref('')
+const formLabelWidth = '140px'
+
+const depts: any = ref([])
+
+getDeptOption().then(res => {
+  console.log(res.data)
+  depts.value = res.data
+})
+
+const form = reactive({
+  id: '',
+  deptId: '',
+  username: '',
+  password: '',
+  email: '',
+  phone: '',
+})
 
 const addData = () => {
+  title.value = '新增用户'
+  dialogFormVisible.value = true
   console.log('add')
 }
 
@@ -27,7 +72,7 @@ const deleteData = () => {
     const rows = xGrid.value.getCheckboxRecords(true)
     if (rows && rows.length >= 1) {
       ElMessageBox.confirm(
-        '此操作将删除所选共享空间位置数据，是否继续？',
+        '此操作将删除所选用户记录，此操作不可逆，是否继续？',
         '删除',
         {
           confirmButtonText: '继续',
@@ -54,31 +99,20 @@ const deleteData = () => {
         .catch(() => {
           ElMessage({
             type: 'info',
-            message: '取消发布预警信息',
+            message: '您取消了该操作',
           })
         })
     } else {
       ElMessage({
-        message: '请选择需要删除的共享空间位置信息',
+        message: '请选择需要删除的用户记录',
         type: 'warning',
       })
     }
   }
 }
 
-const editData = () => {
-  if (xGrid.value) {
-    const rows = xGrid.value.getCheckboxRecords(true)
-    if (rows && rows.length == 1) {
-      // dialogFormVisible.value = true
-      // descForm.alertDesc = rows[0].alertDesc
-    } else {
-      ElMessage({
-        message: '您只能选择一条空间位置信息进行编辑',
-        type: 'warning',
-      })
-    }
-  }
+const editData = (row: any) => {
+  dialogFormVisible.value = true
 }
 
 const xGrid = ref<VxeGridInstance>()
@@ -138,41 +172,31 @@ const gridOptions = reactive<VxeGridProps>({
     items: [
       {
         field: 'username',
-        title: '用户账号',
+        title: '用户名',
         span: 6,
         itemRender: {
           name: '$input',
           props: {
-            placeholder: '请输入用户账号'
+            placeholder: '请输入用户名'
           }
         }
       },
       {
-        field: 'sex',
-        title: '用户性别',
+        field: 'deptId',
+        title: '所在部门',
         span: 6,
         itemRender: {
           name: '$select',
-          options: [],
-          props: { placeholder: '请选择用户性别' },
-        }
-      },
-      {
-        field: 'nickname',
-        title: '用户昵称',
-        span: 6,
-        itemRender: {
-          name: '$input',
+          options: depts,
           props: {
-            placeholder: '请输入用户昵称'
-          }
+            placeholder: '请选择所在部门',
+          },
         }
       },
       {
         field: 'phone',
         title: '手机号码',
         span: 6,
-        folding: true,
         itemRender: {
           name: '$input',
           props: {
@@ -180,43 +204,10 @@ const gridOptions = reactive<VxeGridProps>({
           }
         }
       },
-      {
-        field: 'email',
-        title: '电子邮箱',
-        span: 6,
-        folding: true,
-        itemRender: {
-          name: '$input',
-          props: {
-            placeholder: '请输入电子邮箱'
-          }
-        }
-      },
-      {
-        field: 'deptName',
-        title: '所在部门',
-        span: 6,
-        folding: true,
-        itemRender: {
-          name: '$select',
-          options: [
-            { label: '数据监测中心', value: '数据监测中心' },
-            { label: '用户中心', value: '用户中心' },
-          ],
-          props: {
-            placeholder: '请选择所在部门'
-          }
-        }
-      },
-      {
-        span: 6,
-        folding: true,
-      },
       // 功能
       {
         span: 6,
         align: 'center',
-        collapseNode: true,
         itemRender: {
           name: '$buttons', children: [
             {
@@ -260,50 +251,41 @@ const gridOptions = reactive<VxeGridProps>({
     },
     // 接收 Promise API
     ajax: {
+      // 当点击工具栏查询按钮或者手动提交指令 query或reload 时会被触发
       query: ({ page, sorts, filters, form }) => {
         return new Promise(resolve => {
-          resolve({
-            records: [
-              {
-                "username": 'zhangsan',
-              }
-            ],
-            total: 100
+          const queryParams: any = Object.assign({}, form)
+
+          console.log(page);
+
+          // 处理排序条件
+          const firstSort = sorts[0]
+          if (firstSort) {
+            queryParams.sort = firstSort.field
+            queryParams.order = firstSort.order
+          }
+          // 请求参数
+          const data = {
+            pageNum: page.currentPage,
+            pageSize: page.pageSize,
+            entity: {
+              username: form.username,
+              deptId: form.deptId,
+              phone: form.phone,
+            }
+          }
+          console.log(data);
+
+          // 调用方法
+          getPageUser(data).then(res => {
+            const data = res.data
+            resolve({
+              records: data.records,
+              total: data.total
+            })
           })
         })
       },
-      // 当点击工具栏查询按钮或者手动提交指令 query或reload 时会被触发
-      // query: ({ page, sorts, filters, form }) => {
-      //   return new Promise(resolve => {
-      //     const queryParams: any = Object.assign({}, form)
-
-      //     console.log(page);
-
-      //     // 处理排序条件
-      //     const firstSort = sorts[0]
-      //     if (firstSort) {
-      //       queryParams.sort = firstSort.field
-      //       queryParams.order = firstSort.order
-      //     }
-      //     // 请求参数
-      //     const data = {
-      //       pageNum: page.currentPage,
-      //       pageSize: page.pageSize,
-      //       entity: {
-      //       }
-      //     }
-      //     console.log(data);
-
-      //     // 调用方法
-      //     getPageUser(data).then(res => {
-      //       const data = res.data
-      //       resolve({
-      //         records: data.records,
-      //         total: data.total
-      //       })
-      //     })
-      //   })
-      // },
       delete: ({ body }) => {
         return new Promise((resolve, reject) => {
 
@@ -334,21 +316,30 @@ const gridOptions = reactive<VxeGridProps>({
       field: 'password',
       title: '用户密码',
       align: "center",
-      width: 150,
+      width: 250,
     },
     {
-      field: 'deptName',
+      field: 'deptId',
       title: '所属部门',
       align: "center",
       width: 120,
+      formatter: ({ cellValue }) => {
+        let res = ''
+        depts.value.forEach((item: { value: any; label: any }) => {
+          if (cellValue === item.value) {
+            res = item.label;
+          }
+        })
+        return res
+      }
     },
     {
-      field: 'roleName',
+      field: 'role',
       title: '角色名称',
       align: "center",
       width: 150,
       formatter: ({ cellValue }) => {
-        if (cellValue == '0') {
+        if (cellValue == '1') {
           return '管理员'
         } else {
           return '普通用户'
@@ -362,7 +353,7 @@ const gridOptions = reactive<VxeGridProps>({
       width: 180,
     },
     {
-      field: 'phomeNumber',
+      field: 'phoneNumber',
       title: '手机号',
       align: "center",
       width: 150,
