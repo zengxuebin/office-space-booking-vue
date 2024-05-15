@@ -3,8 +3,11 @@
     <vxe-grid ref='xGrid' v-bind="gridOptions">
       <template #toolbar_buttons>
         <vxe-button status="primary" icon="vxe-icon-add" @click="addData">新增</vxe-button>
-        <vxe-button status="info" icon="vxe-icon-edit" @click="editData">编辑</vxe-button>
         <vxe-button status="danger" icon="vxe-icon-delete" @click="deleteData">删除</vxe-button>
+      </template>
+      <template #operate="{ row }">
+        <vxe-button status="info" icon="vxe-icon-edit" @click="editRowEvent(row)">编辑</vxe-button>
+        <vxe-button status="danger" icon="vxe-icon-delete" @click="removeRowEvent(row)">删除</vxe-button>
       </template>
     </vxe-grid>
   </div>
@@ -257,6 +260,18 @@ const gridOptions = reactive<VxeGridProps>({
     },
     // 接收 Promise API
     ajax: {
+      query: ({ page, sorts, filters, form }) => {
+        return new Promise(resolve => {
+          resolve({
+            records: [
+              {
+                "username": 'zhangsan',
+              }
+            ],
+            total: 100
+          })
+        })
+      },
       // 当点击工具栏查询按钮或者手动提交指令 query或reload 时会被触发
       // query: ({ page, sorts, filters, form }) => {
       //   return new Promise(resolve => {
@@ -363,6 +378,15 @@ const gridOptions = reactive<VxeGridProps>({
       title: '更新时间',
       align: "center",
       width: 180,
+    },
+    {
+      title: '操作',
+      align: "center",
+      width: 200,
+      fixed: 'right',
+      slots: {
+        default: 'operate'
+      }
     },
   ],
   checkboxConfig: {
