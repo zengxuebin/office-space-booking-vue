@@ -12,29 +12,36 @@
     </vxe-grid>
 
     <el-dialog v-model="dialogFormVisible" :title=title width="500" align-center>
-      <el-form :model="form">
-        <el-form-item label="Promotion name" :label-width="formLabelWidth">
-          <el-input v-model="form.name" autocomplete="off" />
+      <el-form ref="ruleFormRef" style="max-width: 500px" :model="userForm" :rules="rules" label-width="auto"
+        :size="formSize" status-icon>
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="userForm.username" placeholder="请输入用户名" />
         </el-form-item>
-        <el-form-item label="Zones" :label-width="formLabelWidth">
-          <el-select v-model="form.deptId" placeholder="Please select a zone">
-            <el-option v-for="item in depts" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="userForm.password" type="password" placeholder="请输入密码" autocomplete="off" />
         </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="dialogFormVisible = false">取消</el-button>
-          <el-button type="primary" @click="dialogFormVisible = false">
+        <el-form-item label="所属部门" prop="deptId">
+          <el-select-v2 v-model="userForm.deptId" placeholder="请选择所属部门" :options="depts" />
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="userForm.email" placeholder="请输入邮箱" />
+        </el-form-item>
+        <el-form-item label="手机号" prop="phone">
+          <el-input v-model="userForm.phone" placeholder="请输入手机号" />
+        </el-form-item>
+        <div class="footer">
+          <el-button type="primary" @click="submitForm(ruleFormRef)">
             确认
           </el-button>
+          <el-button @click="resetForm(ruleFormRef)">重置</el-button>
         </div>
-      </template>
+      </el-form>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { ComponentSize, FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { onMounted, reactive, ref } from 'vue'
 import type { VXETable, VxeGridInstance, VxeGridProps } from 'vxe-table'
@@ -52,7 +59,19 @@ getDeptOption().then(res => {
   depts.value = res.data
 })
 
-const form = reactive({
+const formSize = ref<ComponentSize>('default')
+const ruleFormRef = ref<FormInstance>()
+
+interface UserForm {
+  id: string,
+  deptId: string,
+  username: string,
+  password: string,
+  email: string,
+  phone: string,
+}
+
+const userForm = reactive<UserForm>({
   id: '',
   deptId: '',
   username: '',
@@ -60,6 +79,37 @@ const form = reactive({
   email: '',
   phone: '',
 })
+
+const rules = reactive<FormRules<UserForm>>({
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+  ],
+  deptId: [
+    { required: true, message: '请选择所属部门', trigger: 'change', },
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+  ],
+  email: [
+    { type: 'email', message: '请输入正确的邮箱', trigger: 'blur' },
+  ],
+})
+
+const submitForm = async (formEl: FormInstance | undefined) => {
+  if (!formEl) return
+  await formEl.validate((valid, fields) => {
+    if (valid) {
+      console.log('submit!')
+    } else {
+      console.log('error submit!', fields)
+    }
+  })
+}
+
+const resetForm = (formEl: FormInstance | undefined) => {
+  if (!formEl) return
+  formEl.resetFields()
+}
 
 const addData = () => {
   title.value = '新增用户'
@@ -388,4 +438,10 @@ const gridOptions = reactive<VxeGridProps>({
 })
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.footer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+</style>
