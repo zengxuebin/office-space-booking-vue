@@ -7,7 +7,7 @@
       </template>
       <template #operate="{ row }">
         <vxe-button status="info" icon="vxe-icon-edit" @click="editData(row)">编辑</vxe-button>
-        <vxe-button status="danger" icon="vxe-icon-delete" @click="removeRowEvent(row)">删除</vxe-button>
+        <vxe-button status="danger" icon="vxe-icon-delete" @click="removeRow(row)">删除</vxe-button>
       </template>
     </vxe-grid>
 
@@ -18,7 +18,8 @@
           <el-input v-model="userForm.username" placeholder="请输入用户名" />
         </el-form-item>
         <el-form-item label="密码" prop="password">
-          <el-input v-model="userForm.password" type="password" placeholder="请输入密码" autocomplete="off" />
+          <el-input v-model="userForm.password" :disabled="pwdDisabled" type="password" placeholder="请输入密码"
+            autocomplete="off" />
         </el-form-item>
         <el-form-item label="所属部门" prop="deptId">
           <el-select-v2 v-model="userForm.deptId" placeholder="请选择所属部门" :options="depts" />
@@ -26,8 +27,8 @@
         <el-form-item label="邮箱" prop="email">
           <el-input v-model="userForm.email" placeholder="请输入邮箱" />
         </el-form-item>
-        <el-form-item label="手机号" prop="phone">
-          <el-input v-model="userForm.phone" placeholder="请输入手机号" />
+        <el-form-item label="手机号" prop="phoneNumber">
+          <el-input v-model="userForm.phoneNumber" placeholder="请输入手机号" />
         </el-form-item>
         <div class="footer">
           <el-button type="primary" @click="submitForm(ruleFormRef)">
@@ -45,12 +46,14 @@ import type { ComponentSize, FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { onMounted, reactive, ref } from 'vue'
 import type { VXETable, VxeGridInstance, VxeGridProps } from 'vxe-table'
-import { getPageUser } from '@/api/system/user'
+import { getPageUser, addUser, updateUser, deleteUser, batchDeleteUser } from '@/api/system/user'
 import { getDeptOption } from '@/api/option'
 
 const dialogFormVisible = ref(false)
+const pwdDisabled = ref(false)
 const title = ref('')
-const formLabelWidth = '140px'
+
+let operateType = ''
 
 const depts: any = ref([])
 
@@ -68,7 +71,7 @@ interface UserForm {
   username: string,
   password: string,
   email: string,
-  phone: string,
+  phoneNumber: string,
 }
 
 const userForm = reactive<UserForm>({
@@ -77,7 +80,7 @@ const userForm = reactive<UserForm>({
   username: '',
   password: '',
   email: '',
-  phone: '',
+  phoneNumber: '',
 })
 
 const rules = reactive<FormRules<UserForm>>({
@@ -100,6 +103,27 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   await formEl.validate((valid, fields) => {
     if (valid) {
       console.log('submit!')
+      if (operateType === 'add') {
+        addUser(userForm).then(res => {
+          dialogFormVisible.value = false
+          formEl.resetFields()
+          xGrid.value.commitProxy('query')
+          ElMessage({
+            message: '新增用户成功',
+            type: 'success',
+          })
+        })
+      } else if (operateType === 'update') {
+        updateUser(userForm).then(res => {
+          dialogFormVisible.value = false
+          formEl.resetFields()
+          xGrid.value.commitProxy('query')
+          ElMessage({
+            message: '更新用户成功',
+            type: 'success',
+          })
+        })
+      }
     } else {
       console.log('error submit!', fields)
     }
@@ -113,8 +137,39 @@ const resetForm = (formEl: FormInstance | undefined) => {
 
 const addData = () => {
   title.value = '新增用户'
+  operateType = 'add'
   dialogFormVisible.value = true
   console.log('add')
+}
+
+const removeRow = (row: any) => {
+  console.log(row)
+  ElMessageBox.confirm(
+    '此操作将删除所选用户记录，此操作不可逆，是否继续？',
+    '删除',
+    {
+      confirmButtonText: '继续',
+      cancelButtonText: '取消',
+      type: 'success',
+    }
+  )
+    .then(() => {
+      console.log(row.id);
+      
+      deleteUser(row.id).then(res => {
+        xGrid.value.commitProxy('query')
+        ElMessage({
+          type: 'success',
+          message: '删除用户成功！',
+        })
+      })
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '您取消了该操作',
+      })
+    })
 }
 
 const deleteData = () => {
@@ -131,20 +186,18 @@ const deleteData = () => {
         }
       )
         .then(() => {
-          let rowList: any[] = []
+          let userIds: any[] = []
           rows.forEach(item => {
             console.log(item);
-            rowList.push(item.alertId)
+            userIds.push(item.id)
           })
-          // handleAlertRelease(rowList).then(res => {
-          //   if (xGrid.value) {
-          //     xGrid.value.commitProxy('query')
-          //   }
-          //   ElMessage({
-          //     type: 'success',
-          //     message: '发布预警信息成功，等待相关工作人员推送',
-          //   })
-          // })
+          batchDeleteUser(userIds).then(res => {
+            ElMessage({
+              type: 'success',
+              message: '删除所选用户成功！',
+            })
+            xGrid.value.commitProxy('query')
+          })
         })
         .catch(() => {
           ElMessage({
@@ -162,7 +215,16 @@ const deleteData = () => {
 }
 
 const editData = (row: any) => {
+  title.value = '编辑用户'
+  operateType = 'update'
   dialogFormVisible.value = true
+  pwdDisabled.value = true
+  userForm.id = row.id
+  userForm.username = row.username
+  userForm.deptId = row.deptId
+  userForm.email = row.email
+  userForm.phoneNumber = row.phoneNumber
+  userForm.password = row.password
 }
 
 const xGrid = ref<VxeGridInstance>()
@@ -244,7 +306,7 @@ const gridOptions = reactive<VxeGridProps>({
         }
       },
       {
-        field: 'phone',
+        field: 'phoneNumber',
         title: '手机号码',
         span: 6,
         itemRender: {
@@ -321,7 +383,7 @@ const gridOptions = reactive<VxeGridProps>({
             entity: {
               username: form.username,
               deptId: form.deptId,
-              phone: form.phone,
+              phoneNumber: form.phoneNumber,
             }
           }
           console.log(data);

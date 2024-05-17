@@ -291,8 +291,8 @@ const routes = [
         component: () => import('@/views/PendingAppointment.vue'),
       },
       {
-        path: '/favorite',
-        name: 'favorite',
+        path: '/userFavorite',
+        name: 'userFavorite',
         component: () => import('@/views/Favorite.vue'),
       },
       {
