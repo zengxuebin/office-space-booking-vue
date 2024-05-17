@@ -59,3 +59,15 @@ export const batchDeleteDict = (data: any) => {
     data
   })
 }
+
+
+/**
+ * 获取根据字典类型获取字典数据
+ * @returns 用户信息
+ */
+export const getDictOption = (dictType: string) => {
+  return request({
+    method: 'get',
+    url: '/system/dict/' + dictType
+  })
+}

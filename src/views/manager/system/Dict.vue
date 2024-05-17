@@ -43,20 +43,11 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { onMounted, reactive, ref } from 'vue'
 import type { VXETable, VxeGridInstance, VxeGridProps } from 'vxe-table'
 import { getPageDict, addDict, updateDict, deleteDict, batchDeleteDict } from '@/api/system/dict'
-import { getDeptOption } from '@/api/option'
 
 const dialogFormVisible = ref(false)
-const pwdDisabled = ref(false)
 const title = ref('')
 
 let operateType = ''
-
-const depts: any = ref([])
-
-getDeptOption().then(res => {
-  console.log(res.data)
-  depts.value = res.data
-})
 
 const formSize = ref<ComponentSize>('default')
 const ruleFormRef = ref<FormInstance>()
@@ -212,7 +203,6 @@ const editData = (row: any) => {
   title.value = '编辑字典'
   operateType = 'update'
   dialogFormVisible.value = true
-  pwdDisabled.value = true
   dictForm.id = row.id
   dictForm.dictName = row.dictName
   dictForm.dictType = row.dictType

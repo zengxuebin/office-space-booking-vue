@@ -48,6 +48,7 @@ import { onMounted, reactive, ref } from 'vue'
 import type { VXETable, VxeGridInstance, VxeGridProps } from 'vxe-table'
 import { getPageUser, addUser, updateUser, deleteUser, batchDeleteUser } from '@/api/system/user'
 import { getDeptOption } from '@/api/option'
+import { convertDict } from '@/utils/dictUtil'
 
 const dialogFormVisible = ref(false)
 const pwdDisabled = ref(false)
@@ -55,11 +56,11 @@ const title = ref('')
 
 let operateType = ''
 
-const depts: any = ref([])
+let depts: [] = []
 
 getDeptOption().then(res => {
   console.log(res.data)
-  depts.value = res.data
+  depts = res.data
 })
 
 const formSize = ref<ComponentSize>('default')
@@ -436,13 +437,7 @@ const gridOptions = reactive<VxeGridProps>({
       align: "center",
       width: 120,
       formatter: ({ cellValue }) => {
-        let res = ''
-        depts.value.forEach((item: { value: any; label: any }) => {
-          if (cellValue === item.value) {
-            res = item.label;
-          }
-        })
-        return res
+        return convertDict(depts, cellValue)
       }
     },
     {
