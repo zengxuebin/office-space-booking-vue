@@ -18,7 +18,9 @@ export const useUserStore = defineStore('user', () => {
   const loginUser = (userInfo: any) => {
     return new Promise((resolve, reject) => {
       login(userInfo).then(res => {
-        localStorage.setItem('token', res.token)
+        console.log("登录成功",res)
+        
+        localStorage.setItem('token', res.data)
         token.value = res.token
         console.log(res);
         resolve(res)

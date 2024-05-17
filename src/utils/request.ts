@@ -23,9 +23,11 @@ const service = axios.create({
 service.interceptors.request.use(config => {
   // 是否需要设置 token
   const isToken = (config.headers || {}).isToken === false
+  console.log(isToken)
 
   const token = localStorage.getItem("token");
-
+  console.log(token);
+  
   if (token && !isToken) {
     config.headers['Authorization'] = 'Bearer ' + token
   }
