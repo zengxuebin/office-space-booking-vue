@@ -3,76 +3,163 @@
     <vxe-grid ref='xGrid' v-bind="gridOptions">
       <template #toolbar_buttons>
         <vxe-button status="primary" icon="vxe-icon-add" @click="addData">新增</vxe-button>
-        <vxe-button status="info" icon="vxe-icon-edit" @click="editData">编辑</vxe-button>
         <vxe-button status="danger" icon="vxe-icon-delete" @click="deleteData">删除</vxe-button>
       </template>
-      <template #alert_status="{ row }">
-        <el-tag size='large'>正常</el-tag>
-      </template>
-      <template #operator="{ row }">
-        <el-tag size='large' type="warning" v-if="row.operator === '>='">大于等于</el-tag>
-        <el-tag size='large' type="warning" v-else-if="row.operator === '<='">小于等于</el-tag>
-        <el-tag size='large' type="warning" v-else-if="row.operator === '='">等于</el-tag>
-        <el-tag size='large' type="warning" v-else-if="row.operator === '!='">不等于</el-tag>
-        <el-tag size='large' type="warning" v-else-if="row.operator === '>'">大于</el-tag>
-        <el-tag size='large' type="warning" v-else>小于</el-tag>
-      </template>
-      <template #alert_level="{ row }">
-        <span v-if="row.alertLevel === '红色'" style="color: #c63f34;">{{ row.alertLevel }}</span>
-        <span v-else-if="row.alertLevel === '橙色'" style="color: #f2a747;">{{ row.alertLevel }}</span>
-        <span v-else-if="row.alertLevel === '黄色'" style="color: #f6bd0e;">{{ row.alertLevel }}</span>
-        <span v-else style="color: #4064f6;">{{ row.alertLevel }}</span>
+      <template #operate="{ row }">
+        <vxe-button status="info" icon="vxe-icon-edit" @click="editData(row)">编辑</vxe-button>
+        <vxe-button status="danger" icon="vxe-icon-delete" @click="removeRow(row)">删除</vxe-button>
       </template>
     </vxe-grid>
 
-    <el-dialog v-model="dialogFormVisible" title="Shipping address" width="500">
-    <el-form :model="form">
-      <el-form-item label="Promotion name" :label-width="formLabelWidth">
-        <el-input v-model="form.name" autocomplete="off" />
-      </el-form-item>
-      <el-form-item label="Zones" :label-width="formLabelWidth">
-        <el-select v-model="form.region" placeholder="Please select a zone">
-          <el-option label="Zone No.1" value="shanghai" />
-          <el-option label="Zone No.2" value="beijing" />
-        </el-select>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="dialogFormVisible = false">
-          Confirm
-        </el-button>
-      </div>
-    </template>
-  </el-dialog>
+    <el-dialog v-model="dialogFormVisible" :title=title width="500" align-center @closed="resetForm">
+      <el-form ref="ruleFormRef" style="max-width: 500px" :model="locationForm" :rules="rules" label-width="auto"
+        :size="formSize" status-icon>
+        <el-form-item label="空间类别名称" prop="categoryName">
+          <el-input v-model="locationForm.categoryName" placeholder="请输入空间类别名称" />
+        </el-form-item>
+        <el-form-item label="是否需要审批" prop="isAudit">
+          <el-select-v2 v-model="locationForm.isAudit" placeholder="请选择是否需要审批" :options="audits" />
+        </el-form-item>
+        <div class="footer">
+          <el-button type="primary" @click="submitForm(ruleFormRef)">
+            确认
+          </el-button>
+          <el-button @click="closeDialog">取消</el-button>
+        </div>
+      </el-form>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { ComponentSize, FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { onMounted, reactive, ref } from 'vue'
-import type { VXETable, VxeGridInstance, VxeGridProps } from 'vxe-table'
-import XEUtils from 'xe-utils'
+import { onMounted, reactive, ref, watchEffect } from 'vue'
+import type { VxeGridInstance, VxeGridProps } from 'vxe-table'
+import { getDictOption } from '@/api/system/dict'
+import { getPageCategory, addCategory, updateCategory, deleteCategory, batchDeleteCategory } from '@/api/space/category'
+import { convertDict } from '@/utils/dictUtil'
 
 const dialogFormVisible = ref(false)
-const formLabelWidth = '140px'
+const title = ref('')
 
-const form = reactive({
-  name: '',
-  region: '',
-  date1: '',
-  date2: '',
-  delivery: false,
-  type: [],
-  resource: '',
-  desc: '',
+let operateType = ''
+
+const audits = ref<any[]>([])
+
+onMounted(() => {
+  getDictOption('biz_is_audit').then(res => {
+    console.log(res.data)
+    audits.value = res.data
+  })
 })
 
+watchEffect(() => {
+  if (audits.value.length) {
+    const { formConfig } = gridOptions
+    formConfig.items[1].itemRender.options = audits.value
+  }
+})
+
+const formSize = ref<ComponentSize>('default')
+const ruleFormRef = ref<FormInstance>()
+
+interface CategoryForm {
+  id: string,
+  categoryName: string,
+  isAudit: string
+}
+
+const locationForm = reactive<CategoryForm>({
+  id: '',
+  categoryName: '',
+  isAudit: '',
+})
+
+const resetForm = () => {
+  locationForm.id = ''
+  locationForm.categoryName = ''
+  locationForm.isAudit = ''
+}
+
+const rules = reactive<FormRules<CategoryForm>>({
+  categoryName: [
+    { required: true, message: '请输入共享空间类别名称', trigger: 'blur', },
+  ],
+  isAudit: [
+    { required: true, message: '请选择是否需要审批', trigger: 'change' },
+  ],
+})
+
+const submitForm = async (formEl: FormInstance | undefined) => {
+  if (!formEl) return
+  await formEl.validate((valid, fields) => {
+    if (valid) {
+      console.log('submit!')
+      if (operateType === 'add') {
+        addCategory(locationForm).then(res => {
+          dialogFormVisible.value = false
+          xGrid.value.commitProxy('query')
+          ElMessage({
+            message: '新增空间类别成功',
+            type: 'success',
+          })
+        })
+      } else if (operateType === 'update') {
+        updateCategory(locationForm).then(res => {
+          dialogFormVisible.value = false
+          xGrid.value.commitProxy('query')
+          ElMessage({
+            message: '更新空间类别成功',
+            type: 'success',
+          })
+        })
+      }
+    } else {
+      console.log('error submit!', fields)
+    }
+  })
+}
+
+const closeDialog = () => {
+  dialogFormVisible.value = false
+}
 
 const addData = () => {
+  title.value = '新增空间类别'
+  operateType = 'add'
   dialogFormVisible.value = true
   console.log('add')
+}
+
+const removeRow = (row: any) => {
+  console.log(row)
+  ElMessageBox.confirm(
+    '此操作将删除所选空间类别记录，此操作不可逆，是否继续？',
+    '删除',
+    {
+      confirmButtonText: '继续',
+      cancelButtonText: '取消',
+      type: 'success',
+    }
+  )
+    .then(() => {
+      console.log(row.id);
+
+      deleteCategory(row.id).then(res => {
+        xGrid.value.commitProxy('query')
+        ElMessage({
+          type: 'success',
+          message: '删除空间类别成功！',
+        })
+      })
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '您取消了该操作',
+      })
+    })
 }
 
 const deleteData = () => {
@@ -80,7 +167,7 @@ const deleteData = () => {
     const rows = xGrid.value.getCheckboxRecords(true)
     if (rows && rows.length >= 1) {
       ElMessageBox.confirm(
-        '此操作将删除所选共享空间位置数据，是否继续？',
+        '此操作将删除所选空间类别记录，此操作不可逆，是否继续？',
         '删除',
         {
           confirmButtonText: '继续',
@@ -89,49 +176,41 @@ const deleteData = () => {
         }
       )
         .then(() => {
-          let rowList: any[] = []
+          let dictIds: any[] = []
           rows.forEach(item => {
             console.log(item);
-            rowList.push(item.alertId)
+            dictIds.push(item.id)
           })
-          // handleAlertRelease(rowList).then(res => {
-          //   if (xGrid.value) {
-          //     xGrid.value.commitProxy('query')
-          //   }
-          //   ElMessage({
-          //     type: 'success',
-          //     message: '发布预警信息成功，等待相关工作人员推送',
-          //   })
-          // })
+          batchDeleteCategory(dictIds).then(res => {
+            ElMessage({
+              type: 'success',
+              message: '删除所选空间类别成功！',
+            })
+            xGrid.value.commitProxy('query')
+          })
         })
         .catch(() => {
           ElMessage({
             type: 'info',
-            message: '取消发布预警信息',
+            message: '您取消了该操作',
           })
         })
     } else {
       ElMessage({
-        message: '请选择需要删除的共享空间位置信息',
+        message: '请选择需要删除的空间类别记录',
         type: 'warning',
       })
     }
   }
 }
 
-const editData = () => {
-  if (xGrid.value) {
-    const rows = xGrid.value.getCheckboxRecords(true)
-    if (rows && rows.length == 1) {
-      // dialogFormVisible.value = true
-      // descForm.alertDesc = rows[0].alertDesc
-    } else {
-      ElMessage({
-        message: '您只能选择一条空间位置信息进行编辑',
-        type: 'warning',
-      })
-    }
-  }
+const editData = (row: any) => {
+  title.value = '编辑空间类别'
+  operateType = 'update'
+  dialogFormVisible.value = true
+  locationForm.id = row.id
+  locationForm.categoryName = row.categoryName
+  locationForm.isAudit = row.isAudit
 }
 
 const xGrid = ref<VxeGridInstance>()
@@ -150,7 +229,7 @@ const gridOptions = reactive<VxeGridProps>({
   // 行配置信息
   rowConfig: {
     // 自定义行数据唯一主键的字段名（默认自动生成）
-    keyField: 'ruleId',
+    keyField: 'dictId',
     // 当鼠标移到行时，是否要高亮当前行
     isHover: true
   },
@@ -190,42 +269,31 @@ const gridOptions = reactive<VxeGridProps>({
     titleOverflow: true,
     items: [
       {
-        field: 'ruleName',
-        title: '预警规则名称',
-        span: 6,
+        field: 'categoryName',
+        title: '空间类别名称',
+        span: 8,
         itemRender: {
           name: '$input',
           props: {
-            placeholder: '请输入预警规则名称'
+            placeholder: '请输入空间类别名称'
           }
         }
       },
       {
-        field: 'alertLevel',
-        title: '预警级别',
-        span: 6,
+        field: 'isAudit',
+        title: '是否需要审批',
+        span: 8,
         itemRender: {
           name: '$select',
           options: [],
           props: {
-            placeholder: '请选择预警级别'
-          }
-        }
-      },
-      {
-        field: 'metric',
-        title: '预警监测指标',
-        span: 6,
-        itemRender: {
-          name: '$input',
-          props: {
-            placeholder: '请输入预警监测指标'
+            placeholder: '请选择是否需要审批'
           }
         }
       },
       // 功能
       {
-        span: 6,
+        span: 8,
         align: 'center',
         itemRender: {
           name: '$buttons', children: [
@@ -271,42 +339,39 @@ const gridOptions = reactive<VxeGridProps>({
     // 接收 Promise API
     ajax: {
       // 当点击工具栏查询按钮或者手动提交指令 query或reload 时会被触发
-      // query: ({ page, sorts, filters, form }) => {
-      //   return new Promise(resolve => {
-      //     const queryParams: any = Object.assign({}, form)
-      //     // 处理排序条件
-      //     const firstSort = sorts[0]
-      //     if (firstSort) {
-      //       queryParams.sort = firstSort.field
-      //       queryParams.order = firstSort.order
-      //     }
-      //     // 处理筛选条件
-      //     filters.forEach(({ field, values }) => {
-      //       queryParams[field] = values.join(',')
-      //     })
+      query: ({ page, sorts, filters, form }) => {
+        return new Promise(resolve => {
+          const queryParams: any = Object.assign({}, form)
 
-      //     console.log(form);
-          
-      //     // 请求参数
-      //     const data = {
-      //       pageNum: page.currentPage,
-      //       pageSize: page.pageSize,
-      //       entity: {
-      //         ruleName: form.ruleName,
-      //         alertLevel: form.alertLevel,
-      //         metric: form.metric,
-      //       }
-      //     }
-      //     // 调用方法
-      //     getPageAlertRule(data).then(res => {
-      //       const data = res.data
-      //       resolve({
-      //         records: data.records,
-      //         total: data.total
-      //       })
-      //     })
-      //   })
-      // },
+          console.log(page);
+
+          // 处理排序条件
+          const firstSort = sorts[0]
+          if (firstSort) {
+            queryParams.sort = firstSort.field
+            queryParams.order = firstSort.order
+          }
+          // 请求参数
+          const data = {
+            pageNum: page.currentPage,
+            pageSize: page.pageSize,
+            entity: {
+              categoryName: form.categoryName,
+              isAudit: form.isAudit,
+            }
+          }
+          console.log(data);
+
+          // 调用方法
+          getPageCategory(data).then(res => {
+            const data = res.data
+            resolve({
+              records: data.records,
+              total: data.total
+            })
+          })
+        })
+      },
       delete: ({ body }) => {
         return new Promise((resolve, reject) => {
 
@@ -319,117 +384,44 @@ const gridOptions = reactive<VxeGridProps>({
       type: 'checkbox',
       width: 60,
       align: "center",
-      fixed: 'left'
+      fixed: 'left',
     },
     {
       title: '序号',
       type: 'seq',
       align: "center",
-      width: 60
     },
     {
-      field: 'ruleName',
-      title: '预警规则名称',
+      field: 'categoryName',
+      title: '空间类别名称',
       align: "center",
-      width: 200,
     },
     {
-      field: 'metric',
-      title: '预警监测指标',
+      field: 'isAudit',
+      title: '是否需要审批',
       align: "center",
-      width: 150,
       formatter: ({ cellValue }) => {
-        if (cellValue === 'temperature') {
-          return '温度'
-        } else if (cellValue === 'windSpeed') {
-          return '风速'
-        } else if (cellValue === 'precipitation') {
-          return '降水量'
-        } else if (cellValue === 'visibility') {
-          return '能见度'
-        } else if (cellValue === 'humidity') {
-          return '湿度'
-        } else if (cellValue === 'aqi') {
-          return 'AQI'
-        } else {
-          return 'PM2.5'
-        }
+        return convertDict(audits.value, cellValue)
       }
-    },
-    {
-      field: 'operator',
-      title: '比较操作符',
-      align: "center",
-      width: 120,
-      slots: {
-        default: 'operator',
-      },
-    },
-    {
-      field: 'threshold',
-      title: '预警触发阈值',
-      align: "center",
-      width: 120,
-    },
-    {
-      field: 'alertLevel',
-      title: '预警级别',
-      align: "center",
-      width: 120,
-      slots: {
-        default: 'alert_level',
-      },
-    },
-    {
-      field: 'priority',
-      title: '预警优先级',
-      align: "center",
-      width: 120,
-    },
-    {
-      field: 'alertStatus',
-      title: '预警状态',
-      align: "center",
-      width: 120,
-      slots: {
-        default: 'alert_status',
-      },
-    },
-    {
-      field: 'ruleDesc',
-      title: '预警描述',
-      align: "center",
-      width: 300,
-    },
-    {
-      field: 'createBy',
-      title: '创建者',
-      align: "center",
-      width: 120,
     },
     {
       field: 'createTime',
       title: '创建时间',
       align: "center",
-      width: 180,
-    },
-    {
-      field: 'updateBy',
-      title: '更新者',
-      align: "center",
-      width: 120,
     },
     {
       field: 'updateTime',
       title: '更新时间',
       align: "center",
-      width: 180,
     },
     {
-      field: 'remark',
-      title: '备注',
+      title: '操作',
       align: "center",
       width: 200,
+      fixed: 'right',
+      slots: {
+        default: 'operate'
+      }
     },
   ],
   checkboxConfig: {
@@ -438,38 +430,12 @@ const gridOptions = reactive<VxeGridProps>({
     range: true
   },
 })
-
-onMounted(() => {
-  const levelList = [
-    { label: '红色', value: '红色' },
-    { label: '橙色', value: '橙色' },
-    { label: '黄色', value: '黄色' },
-    { label: '蓝色', value: '蓝色' },
-  ]
-  const { formConfig } = gridOptions
-
-  if (formConfig && formConfig.items) {
-    const levelItem = formConfig.items[1]
-    if (levelItem && levelItem.itemRender) {
-      levelItem.itemRender.options = levelList
-    }
-  }
-})
-
-const editLocation = () => {
-  if (xGrid.value) {
-    const rows = xGrid.value.getCheckboxRecords(true)
-    if (rows && rows.length == 1) {
-      // dialogFormVisible.value = true
-      // descForm.alertDesc = rows[0].alertDesc
-    } else {
-      ElMessage({
-        message: '您只能选择一条预警信息进行编辑',
-        type: 'warning',
-      })
-    }
-  }
-}
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.footer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+</style>

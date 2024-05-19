@@ -11,26 +11,29 @@
       </template>
     </vxe-grid>
 
-    <el-dialog v-model="dialogFormVisible" :title=title width="500" align-center>
-      <el-form ref="ruleFormRef" style="max-width: 500px" :model="dictForm" :rules="rules" label-width="auto"
+    <el-dialog v-model="dialogFormVisible" :title=title width="500" align-center @closed="resetForm">
+      <el-form ref="ruleFormRef" style="max-width: 500px" :model="deptForm" :rules="rules" label-width="auto"
         :size="formSize" status-icon>
-        <el-form-item label="字典名称" prop="dictName">
-          <el-input v-model="dictForm.dictName" placeholder="请输入字典名称" />
+        <el-form-item label="父部门id" prop="parentId">
+          <el-select-v2 v-model="deptForm.parentId" placeholder="请选择父部门" :options="depts" :disabled="idDisabled" />
         </el-form-item>
-        <el-form-item label="字典类型" prop="dictType">
-          <el-input v-model="dictForm.dictType" placeholder="请输入字典类型" />
+        <el-form-item label="部门名称" prop="deptName">
+          <el-input v-model="deptForm.deptName" placeholder="请输入部门类型" />
         </el-form-item>
-        <el-form-item label="字典编码" prop="dictValue">
-          <el-input v-model="dictForm.dictValue" placeholder="请输入字典编码值" />
+        <el-form-item label="负责人" prop="leader">
+          <el-input v-model="deptForm.leader" placeholder="请输入负责人名称" />
         </el-form-item>
-        <el-form-item label="字典标签" prop="dictLabel">
-          <el-input v-model="dictForm.dictLabel" placeholder="请输入字典标签值" />
+        <el-form-item label="联系电话" prop="phone">
+          <el-input v-model="deptForm.phone" placeholder="请输入负责人联系方式" />
+        </el-form-item>
+        <el-form-item label="部门状态" prop="status">
+          <el-select-v2 v-model="deptForm.status" placeholder="请选择部门状态" :options="deptStatus" />
         </el-form-item>
         <div class="footer">
           <el-button type="primary" @click="submitForm(ruleFormRef)">
             确认
           </el-button>
-          <el-button @click="resetForm(ruleFormRef)">重置</el-button>
+          <el-button @click="closeDialog">取消</el-button>
         </div>
       </el-form>
     </el-dialog>
@@ -40,55 +43,82 @@
 <script setup lang="ts">
 import type { ComponentSize, FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, watchEffect } from 'vue'
 import type { VXETable, VxeGridInstance, VxeGridProps } from 'vxe-table'
-import { getPageDict, addDict, updateDict, deleteDict, batchDeleteDict } from '@/api/system/dict'
+import { getPageDept, addDept, updateDept, deleteDept, batchDeleteDept } from '@/api/system/dept'
 import { getDictOption } from '@/api/system/dict'
+import { getDeptOption } from '@/api/option'
 import { convertDict } from '@/utils/dictUtil'
 
 const dialogFormVisible = ref(false)
 const title = ref('')
 
+const idDisabled = ref(false)
+
 let operateType = ''
 
-let deptStatus: [] = []
+const deptStatus = ref<any[]>([])
 
-getDictOption('sys_dept_status').then(res => {
-  console.log(res.data)
-  deptStatus = res.data
+const depts = ref<any[]>([])
+
+onMounted(() => {
+  getDictOption('sys_dept_status').then(res => {
+    console.log(res.data)
+    deptStatus.value = res.data
+  })
+
+  getDeptOption().then(res => {
+    console.log(res.data)
+    depts.value = res.data
+  })
+})
+
+watchEffect(() => {
+  if (deptStatus.value.length) {
+    const { formConfig } = gridOptions
+    formConfig.items[2].itemRender.options = deptStatus.value
+  }
 })
 
 const formSize = ref<ComponentSize>('default')
 const ruleFormRef = ref<FormInstance>()
 
-interface DictForm {
+interface DeptForm {
   id: string,
-  dictName: string,
-  dictType: string,
-  dictValue: string,
-  dictLabel: string,
+  parentId: string,
+  deptName: string,
+  leader: string,
+  phone: string,
+  status: string
 }
 
-const dictForm = reactive<DictForm>({
+const deptForm = reactive<DeptForm>({
   id: '',
-  dictName: '',
-  dictType: '',
-  dictValue: '',
-  dictLabel: '',
+  parentId: '',
+  deptName: '',
+  leader: '',
+  phone: '',
+  status: ''
 })
 
-const rules = reactive<FormRules<DictForm>>({
-  dictName: [
-    { required: true, message: '请输入字典名称', trigger: 'blur' },
+const resetForm = () => {
+  deptForm.id = ''
+  deptForm.parentId = ''
+  deptForm.deptName = ''
+  deptForm.leader = ''
+  deptForm.phone = ''
+  deptForm.status = ''
+}
+
+const rules = reactive<FormRules<DeptForm>>({
+  deptName: [
+    { required: true, message: '请输入部门名称', trigger: 'blur', },
   ],
-  dictType: [
-    { required: true, message: '请输入字典类型', trigger: 'blur', },
+  leader: [
+    { required: true, message: '请输入负责人', trigger: 'blur' },
   ],
-  dictValue: [
-    { required: true, message: '请输入字典编码值', trigger: 'blur' },
-  ],
-  dictLabel: [
-    { required: true, message: '请输入字典标签值', trigger: 'blur' },
+  status: [
+    { required: true, message: '请选择部门状态', trigger: 'change' },
   ],
 })
 
@@ -98,22 +128,20 @@ const submitForm = async (formEl: FormInstance | undefined) => {
     if (valid) {
       console.log('submit!')
       if (operateType === 'add') {
-        addDict(dictForm).then(res => {
+        addDept(deptForm).then(res => {
           dialogFormVisible.value = false
-          formEl.resetFields()
           xGrid.value.commitProxy('query')
           ElMessage({
-            message: '新增字典成功',
+            message: '新增部门成功',
             type: 'success',
           })
         })
       } else if (operateType === 'update') {
-        updateDict(dictForm).then(res => {
+        updateDept(deptForm).then(res => {
           dialogFormVisible.value = false
-          formEl.resetFields()
           xGrid.value.commitProxy('query')
           ElMessage({
-            message: '更新字典成功',
+            message: '更新部门成功',
             type: 'success',
           })
         })
@@ -124,13 +152,12 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   })
 }
 
-const resetForm = (formEl: FormInstance | undefined) => {
-  if (!formEl) return
-  formEl.resetFields()
+const closeDialog = () => {
+  dialogFormVisible.value = false
 }
 
 const addData = () => {
-  title.value = '新增字典'
+  title.value = '新增部门'
   operateType = 'add'
   dialogFormVisible.value = true
   console.log('add')
@@ -139,7 +166,7 @@ const addData = () => {
 const removeRow = (row: any) => {
   console.log(row)
   ElMessageBox.confirm(
-    '此操作将删除所选字典记录，此操作不可逆，是否继续？',
+    '此操作将删除所选部门记录，此操作不可逆，是否继续？',
     '删除',
     {
       confirmButtonText: '继续',
@@ -150,11 +177,11 @@ const removeRow = (row: any) => {
     .then(() => {
       console.log(row.id);
 
-      deleteDict(row.id).then(res => {
+      deleteDept(row.id).then(res => {
         xGrid.value.commitProxy('query')
         ElMessage({
           type: 'success',
-          message: '删除字典成功！',
+          message: '删除部门成功！',
         })
       })
     })
@@ -171,7 +198,7 @@ const deleteData = () => {
     const rows = xGrid.value.getCheckboxRecords(true)
     if (rows && rows.length >= 1) {
       ElMessageBox.confirm(
-        '此操作将删除所选字典记录，此操作不可逆，是否继续？',
+        '此操作将删除所选部门记录，此操作不可逆，是否继续？',
         '删除',
         {
           confirmButtonText: '继续',
@@ -185,10 +212,10 @@ const deleteData = () => {
             console.log(item);
             dictIds.push(item.id)
           })
-          batchDeleteDict(dictIds).then(res => {
+          batchDeleteDept(dictIds).then(res => {
             ElMessage({
               type: 'success',
-              message: '删除所选字典成功！',
+              message: '删除所选部门成功！',
             })
             xGrid.value.commitProxy('query')
           })
@@ -201,7 +228,7 @@ const deleteData = () => {
         })
     } else {
       ElMessage({
-        message: '请选择需要删除的字典记录',
+        message: '请选择需要删除的部门记录',
         type: 'warning',
       })
     }
@@ -209,14 +236,18 @@ const deleteData = () => {
 }
 
 const editData = (row: any) => {
-  title.value = '编辑字典'
+  title.value = '编辑部门'
   operateType = 'update'
+  if (row.id === 1) {
+    idDisabled.value = true
+  }
   dialogFormVisible.value = true
-  dictForm.id = row.id
-  dictForm.dictName = row.dictName
-  dictForm.dictType = row.dictType
-  dictForm.dictValue = row.dictValue
-  dictForm.dictLabel = row.dictLabel
+  deptForm.id = row.id
+  deptForm.deptName = row.deptName
+  deptForm.parentId = row.parentId
+  deptForm.leader = row.leader
+  deptForm.phone = row.phone
+  deptForm.status = row.status
 }
 
 const xGrid = ref<VxeGridInstance>()
@@ -275,35 +306,36 @@ const gridOptions = reactive<VxeGridProps>({
     titleOverflow: true,
     items: [
       {
-        field: 'dictName',
-        title: '字典名称',
+        field: 'deptName',
+        title: '部门名称',
         span: 6,
         itemRender: {
           name: '$input',
           props: {
-            placeholder: '请输入字典名称'
+            placeholder: '请输入部门名称'
           }
         }
       },
       {
-        field: 'dictType',
-        title: '字典类型',
+        field: 'leader',
+        title: '负责人',
         span: 6,
         itemRender: {
           name: '$input',
           props: {
-            placeholder: '请输入字典类型'
+            placeholder: '请输入负责人'
           }
         }
       },
       {
-        field: 'dictLabel',
-        title: '字典标签',
+        field: 'status',
+        title: '部门状态',
         span: 6,
         itemRender: {
-          name: '$input',
+          name: '$select',
+          options: [],
           props: {
-            placeholder: '请输入字典标签'
+            placeholder: '请选择部门状态'
           }
         }
       },
@@ -372,15 +404,15 @@ const gridOptions = reactive<VxeGridProps>({
             pageNum: page.currentPage,
             pageSize: page.pageSize,
             entity: {
-              dictName: form.dictName,
-              dictType: form.dictType,
-              dictLabel: form.dictLabel,
+              deptName: form.deptName,
+              leader: form.leader,
+              status: form.status,
             }
           }
           console.log(data);
 
           // 调用方法
-          getPageDict(data).then(res => {
+          getPageDept(data).then(res => {
             const data = res.data
             resolve({
               records: data.records,
@@ -409,9 +441,12 @@ const gridOptions = reactive<VxeGridProps>({
       align: "center",
     },
     {
-      field: 'parentDeptName',
+      field: 'parentId',
       title: '上级部门名称',
       align: "center",
+      formatter: ({ cellValue }) => {
+        return convertDict(depts.value, cellValue)
+      }
     },
     {
       field: 'deptName',
@@ -433,7 +468,7 @@ const gridOptions = reactive<VxeGridProps>({
       title: '部门状态',
       align: "center",
       formatter: ({ cellValue }) => {
-        return convertDict(deptStatus, cellValue)
+        return convertDict(deptStatus.value, cellValue)
       }
     },
     {

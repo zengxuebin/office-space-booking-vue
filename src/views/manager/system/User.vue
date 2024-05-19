@@ -11,7 +11,7 @@
       </template>
     </vxe-grid>
 
-    <el-dialog v-model="dialogFormVisible" :title=title width="500" align-center>
+    <el-dialog v-model="dialogFormVisible" :title=title width="500" align-center @closed="resetForm">
       <el-form ref="ruleFormRef" style="max-width: 500px" :model="userForm" :rules="rules" label-width="auto"
         :size="formSize" status-icon>
         <el-form-item label="用户名" prop="username">
@@ -34,7 +34,7 @@
           <el-button type="primary" @click="submitForm(ruleFormRef)">
             确认
           </el-button>
-          <el-button @click="resetForm(ruleFormRef)">重置</el-button>
+          <el-button @click="closeDialog()">取消</el-button>
         </div>
       </el-form>
     </el-dialog>
@@ -44,7 +44,7 @@
 <script setup lang="ts">
 import type { ComponentSize, FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, watchEffect } from 'vue'
 import type { VXETable, VxeGridInstance, VxeGridProps } from 'vxe-table'
 import { getPageUser, addUser, updateUser, deleteUser, batchDeleteUser } from '@/api/system/user'
 import { getDeptOption } from '@/api/option'
@@ -56,11 +56,20 @@ const title = ref('')
 
 let operateType = ''
 
-let depts: [] = []
+const depts = ref<any[]>([])
 
-getDeptOption().then(res => {
-  console.log(res.data)
-  depts = res.data
+onMounted(() => {
+  getDeptOption().then(res => {
+    console.log(res.data)
+    depts.value = res.data
+  })
+})
+
+watchEffect(() => {
+  if (depts.value.length) {
+    const { formConfig } = gridOptions
+    formConfig.items[1].itemRender.options = depts.value    
+  }
 })
 
 const formSize = ref<ComponentSize>('default')
@@ -83,6 +92,16 @@ const userForm = reactive<UserForm>({
   email: '',
   phoneNumber: '',
 })
+
+const resetForm = () => {
+  userForm.id = ''
+  userForm.id= ''
+  userForm.deptId= ''
+  userForm.username= ''
+  userForm.password= ''
+  userForm.email= ''
+  userForm.phoneNumber= ''
+}
 
 const rules = reactive<FormRules<UserForm>>({
   username: [
@@ -107,7 +126,6 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       if (operateType === 'add') {
         addUser(userForm).then(res => {
           dialogFormVisible.value = false
-          formEl.resetFields()
           xGrid.value.commitProxy('query')
           ElMessage({
             message: '新增用户成功',
@@ -117,7 +135,6 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       } else if (operateType === 'update') {
         updateUser(userForm).then(res => {
           dialogFormVisible.value = false
-          formEl.resetFields()
           xGrid.value.commitProxy('query')
           ElMessage({
             message: '更新用户成功',
@@ -131,9 +148,8 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   })
 }
 
-const resetForm = (formEl: FormInstance | undefined) => {
-  if (!formEl) return
-  formEl.resetFields()
+const closeDialog = () => {
+  dialogFormVisible.value = false
 }
 
 const addData = () => {
@@ -156,7 +172,7 @@ const removeRow = (row: any) => {
   )
     .then(() => {
       console.log(row.id);
-      
+
       deleteUser(row.id).then(res => {
         xGrid.value.commitProxy('query')
         ElMessage({
@@ -300,7 +316,7 @@ const gridOptions = reactive<VxeGridProps>({
         span: 6,
         itemRender: {
           name: '$select',
-          options: depts,
+          options: depts.value,
           props: {
             placeholder: '请选择所在部门',
           },
@@ -437,7 +453,7 @@ const gridOptions = reactive<VxeGridProps>({
       align: "center",
       width: 120,
       formatter: ({ cellValue }) => {
-        return convertDict(depts, cellValue)
+        return convertDict(depts.value, cellValue)
       }
     },
     {

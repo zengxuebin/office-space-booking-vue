@@ -11,7 +11,7 @@
       </template>
     </vxe-grid>
 
-    <el-dialog v-model="dialogFormVisible" :title=title width="500" align-center>
+    <el-dialog v-model="dialogFormVisible" :title=title width="500" align-center @closed="resetForm">
       <el-form ref="ruleFormRef" style="max-width: 500px" :model="dictForm" :rules="rules" label-width="auto"
         :size="formSize" status-icon>
         <el-form-item label="字典名称" prop="dictName">
@@ -30,7 +30,7 @@
           <el-button type="primary" @click="submitForm(ruleFormRef)">
             确认
           </el-button>
-          <el-button @click="resetForm(ruleFormRef)">重置</el-button>
+          <el-button @click="closeDialog">取消</el-button>
         </div>
       </el-form>
     </el-dialog>
@@ -68,6 +68,14 @@ const dictForm = reactive<DictForm>({
   dictLabel: '',
 })
 
+const resetForm = () => {
+  dictForm.id = ''
+  dictForm.dictName = ''
+  dictForm.dictType = ''
+  dictForm.dictValue = ''
+  dictForm.dictLabel = ''
+}
+
 const rules = reactive<FormRules<DictForm>>({
   dictName: [
     { required: true, message: '请输入字典名称', trigger: 'blur' },
@@ -91,7 +99,6 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       if (operateType === 'add') {
         addDict(dictForm).then(res => {
           dialogFormVisible.value = false
-          formEl.resetFields()
           xGrid.value.commitProxy('query')
           ElMessage({
             message: '新增字典成功',
@@ -101,7 +108,6 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       } else if (operateType === 'update') {
         updateDict(dictForm).then(res => {
           dialogFormVisible.value = false
-          formEl.resetFields()
           xGrid.value.commitProxy('query')
           ElMessage({
             message: '更新字典成功',
@@ -115,9 +121,8 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   })
 }
 
-const resetForm = (formEl: FormInstance | undefined) => {
-  if (!formEl) return
-  formEl.resetFields()
+const closeDialog = () => {
+  dialogFormVisible.value = false
 }
 
 const addData = () => {
