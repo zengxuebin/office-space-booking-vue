@@ -1,56 +1,34 @@
 <template>
   <div style="overflow: hidden; width: 100%; height: 100%;">
-    <vxe-grid ref='xGrid' v-bind="gridOptions" v-on="gridEvent">
-      <template #alertStatus="{ row }">
-        <el-tag size='large' type="danger" v-if="row.alertStatus === '-2'">已过期</el-tag>
-        <el-tag size='large' type="info" v-else-if="row.alertStatus === '-1'">已忽略</el-tag>
-        <el-tag size='large' type="warning" v-else-if="row.alertStatus === '0'">待处理</el-tag>
-        <el-tag size='large' type="warning" v-else-if="row.alertStatus === '1'">待推送</el-tag>
-        <el-tag size='large' type="warning" v-else-if="row.alertStatus === '2'">待确认</el-tag>
-        <el-tag size='large' type="warning" v-else-if="row.alertStatus === '3'">待解除</el-tag>
-        <el-tag size='large' type="warning" v-else-if="row.alertStatus === '4'">待关闭</el-tag>
-        <el-tag size='large' type="success" v-else>流程结束</el-tag>
-      </template>
+    <vxe-grid ref='xGrid' v-bind="gridOptions">
     </vxe-grid>
-    <el-dialog v-model="dialogVisible" title="预警详情" width="50%" align-center>
-      <template #header="{ close, titleId, titleClass }">
-        <div class="my-header">
-          <span class="titleClass">预警详情</span>
-        </div>
-      </template>
-      <el-row :gutter="20" style="margin-bottom: 10px;">
-        <el-col :span="16">
-          <span class="title">{{ alertDetail.alertTitle }}</span>
-        </el-col>
-        <el-col :span="8" style="text-align: right;">
-          {{ alertDetail.alertTime }}
-        </el-col>
-      </el-row>
-      <el-row>
-        <el-col :span="24" class="main">
-          {{ alertDetail.alertDesc }}
-        </el-col>
-      </el-row>
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
-import type { VXETable, VxeGridInstance, VxeGridListeners, VxeGridProps } from 'vxe-table'
-import XEUtils from 'xe-utils'
+import { onMounted, reactive, ref, watchEffect } from 'vue'
+import type { VxeGridInstance, VxeGridProps } from 'vxe-table'
+import { getDictOption } from '@/api/system/dict'
+import { convertDict } from '@/utils/dictUtil'
+import { getAuditPage } from '@/api/audit'
 
-const stationList: any = ref([])
+const statuses = ref<any[]>([])
 
-const alertRuleList: any = ref([])
+onMounted(() => {
+  getDictOption('biz_audit_status').then(res => {
+    console.log(res.data)
+    statuses.value = res.data
+  })
+})
+
+watchEffect(() => {
+  if (statuses.value.length) {
+    const { formConfig } = gridOptions
+    formConfig.items[0].itemRender.options = statuses.value
+  }
+})
 
 const xGrid = ref<VxeGridInstance>()
-
-const alertDetail = reactive({
-  alertTitle: '',
-  alertDesc: '',
-  alertTime: '',
-})
 
 const gridOptions = reactive<VxeGridProps>({
   border: true,
@@ -66,7 +44,7 @@ const gridOptions = reactive<VxeGridProps>({
   // 行配置信息
   rowConfig: {
     // 自定义行数据唯一主键的字段名（默认自动生成）
-    keyField: 'alertId',
+    keyField: 'dictId',
     // 当鼠标移到行时，是否要高亮当前行
     isHover: true
   },
@@ -106,133 +84,24 @@ const gridOptions = reactive<VxeGridProps>({
     titleOverflow: true,
     items: [
       {
-        field: 'alertTitle',
-        title: '预警标题',
-        span: 6,
-        itemRender: {
-          name: '$input',
-          props: {
-            placeholder: '请输入预警信息标题'
-          }
-        }
-      },
-      {
-        field: 'alertType',
-        title: '预警类型',
+        field: 'status',
+        title: '审核状态',
         span: 6,
         itemRender: {
           name: '$select',
           options: [],
           props: {
-            placeholder: '请选择预警类型'
+            placeholder: '请选择审核状态'
           }
         }
       },
       {
-        field: 'alertStatus',
-        title: '预警状态',
-        span: 6,
-        itemRender: {
-          name: '$select',
-          options: [
-            { label: '已过期', value: '-2' },
-            { label: '已忽略', value: '-1' },
-            { label: '待处理', value: '0' },
-            { label: '待推送', value: '1' },
-            { label: '待确认', value: '2' },
-            { label: '待解除', value: '3' },
-            { label: '待关闭', value: '4' },
-            { label: '流程结束', value: '5' },
-          ],
-          props: {
-            placeholder: '请选择预警状态',
-          },
-        }
-      },
-      {
-        field: 'alertLevel',
-        title: '预警级别',
-        span: 6,
-        folding: true,
-        itemRender: {
-          name: '$select',
-          options: [
-            { label: '白色', value: 'level_01' },
-            { label: '蓝色', value: 'level_02' },
-            { label: '黄色', value: 'level_03' },
-            { label: '橙色', value: 'level_04' },
-            { label: '红色', value: 'level_05' },
-          ],
-          props: {
-            placeholder: '请选择预警状态',
-          },
-        }
-      },
-      {
-        field: 'alertLevel',
-        title: '预警规则',
-        span: 6,
-        folding: true,
-        itemRender: {
-          name: '$select',
-          options: [
-            { label: '台风', value: 'type_01' },
-            { label: '暴雨', value: 'type_02' },
-            { label: '暴雪', value: 'type_03' },
-            { label: '寒潮', value: 'type_04' },
-            { label: '大风', value: 'type_05' },
-            { label: '沙尘暴', value: 'type_06' },
-            { label: '高温', value: 'type_07' },
-            { label: '干旱', value: 'type_08' },
-            { label: '雷电', value: 'type_09' },
-            { label: '冰雹', value: 'type_10' },
-            { label: '霜冻', value: 'type_11' },
-            { label: '大雾', value: 'type_12' },
-            { label: '霾', value: 'type_13' },
-            { label: '雷雨大风', value: 'type_14' },
-            { label: '空气重污染', value: 'type_15' },
-          ],
-          props: {
-            placeholder: '请选择预警状态',
-          },
-        }
-      },
-      {
-        field: 'alertSource',
-        title: '预警来源',
-        span: 6,
-        folding: true,
-        itemRender: {
-          name: '$select',
-          options: [
-            { label: '国家预警信息发布中心', value: '国家预警信息发布中心' }
-          ],
-          props: {
-            placeholder: '请选择预警来源',
-          },
-          defaultValue: '国家预警信息发布中心'
-        }
-      },
-      {
-        field: 'alertArea',
-        title: '影响区域',
-        span: 6,
-        folding: true,
-        itemRender: {
-          name: '$select',
-          options: [
-            { label: '', value: '' }
-          ],
-          props: {
-            placeholder: '请选择影响区域',
-          },
-        }
+        span: 12,
       },
       // 功能
       {
         span: 6,
         align: 'center',
-        collapseNode: true,
         itemRender: {
           name: '$buttons', children: [
             {
@@ -274,42 +143,38 @@ const gridOptions = reactive<VxeGridProps>({
     // 接收 Promise API
     ajax: {
       // 当点击工具栏查询按钮或者手动提交指令 query或reload 时会被触发
-      // query: ({ page, sorts, filters, form }) => {
-      //   return new Promise(resolve => {
-      //     const queryParams: any = Object.assign({}, form)
-      //     // 处理排序条件
-      //     const firstSort = sorts[0]
-      //     if (firstSort) {
-      //       queryParams.sort = firstSort.field
-      //       queryParams.order = firstSort.order
-      //     }
-      //     // 处理筛选条件
-      //     filters.forEach(({ field, values }) => {
-      //       queryParams[field] = values.join(',')
-      //     })
-      //     // 请求参数
-      //     const data = {
-      //       pageNum: page.currentPage,
-      //       pageSize: page.pageSize,
-      //       entity: {
-      //         alertTitle: form.alertTitle,
-      //         alertType: form.alertType,
-      //         alertStatus: form.alertStatus,
-      //         alertLevel: form.alertLevel,
-      //         alertRuleId: form.alertRuleId,
-      //         alertSource: form.alertSource,
-      //         alertAreaId: form.alertAreaId,
-      //       }
-      //     }
-      //     getPageAllAlert(data).then(res => {
-      //       const data = res.data
-      //       resolve({
-      //         records: data.records,
-      //         total: data.total
-      //       })
-      //     })
-      //   })
-      // },
+      query: ({ page, sorts, filters, form }) => {
+        return new Promise(resolve => {
+          const queryParams: any = Object.assign({}, form)
+
+          console.log(page);
+
+          // 处理排序条件
+          const firstSort = sorts[0]
+          if (firstSort) {
+            queryParams.sort = firstSort.field
+            queryParams.order = firstSort.order
+          }
+          // 请求参数
+          const data = {
+            pageNum: page.currentPage,
+            pageSize: page.pageSize,
+            entity: {
+              status: form.status,
+            }
+          }
+          console.log(data);
+
+          // 调用方法
+          getAuditPage(data).then(res => {
+            const data = res.data
+            resolve({
+              records: data.records,
+              total: data.total
+            })
+          })
+        })
+      },
       delete: ({ body }) => {
         return new Promise((resolve, reject) => {
 
@@ -322,95 +187,34 @@ const gridOptions = reactive<VxeGridProps>({
       title: '序号',
       type: 'seq',
       align: "center",
-      width: 60
     },
     {
-      field: 'alertTitle',
-      title: '预警信息标题',
+      field: 'reserveId',
+      title: '预约id',
       align: "center",
-      width: 150,
-      className: 'cell-click',
     },
     {
-      field: 'alertAreaId',
-      title: '影响区域',
+      field: 'status',
+      title: '审核结果',
       align: "center",
-      width: 180,
       formatter: ({ cellValue }) => {
-        let res = ''
-        stationList.value.forEach((item: { value: any; label: any }) => {
-          if (cellValue === item.value) {
-            res = item.label;
-          }
-        })
-        return res
+        return convertDict(statuses.value, cellValue)
       }
     },
     {
-      field: 'alertRuleId',
-      title: '关联预警规则',
+      field: 'comment',
+      title: '审核意见',
       align: "center",
-      width: 180,
-      formatter: ({ cellValue }) => {
-        let res = ''
-        alertRuleList.value.forEach((item: { value: any; label: any }) => {
-          if (cellValue === item.value) {
-            res = item.label;
-          }
-        })
-        return res
-      }
     },
     {
-      field: 'triggerValue',
-      title: '触发预警监测值',
+      field: 'auditPerson',
+      title: '审核人员',
       align: "center",
-      width: 150,
     },
     {
-      field: 'alertStatus',
-      title: '预警状态',
+      field: 'auditTime',
+      title: '审核时间',
       align: "center",
-      width: 120,
-      slots: {
-        default: 'alertStatus',
-      },
-    },
-    {
-      field: 'alertType',
-      title: '预警类型',
-      align: "center",
-      width: 120,
-    },
-    {
-      field: 'alertLevel',
-      title: '预警级别',
-      align: "center",
-      width: 120,
-    },
-    {
-      field: 'alertSource',
-      title: '预警来源',
-      align: "center",
-      width: 180,
-    },
-    {
-      field: 'triggerTime',
-      title: '预警触发时间',
-      align: "center",
-      width: 180,
-    },
-    {
-      field: 'startTime',
-      title: '预警开始时间',
-      align: "center",
-      width: 180,
-    },
-    {
-      field: 'endTime',
-      title: '预警结束时间',
-      align: "center",
-      width: 180,
     },
   ],
   checkboxConfig: {
@@ -419,45 +223,12 @@ const gridOptions = reactive<VxeGridProps>({
     range: true
   },
 })
-
-const dialogVisible = ref(false)
-
-const gridEvent: VxeGridListeners = {
-  cellClick({ row, column }) {
-    console.log(row)
-    console.log(column)
-    if (column.field === 'alertTitle') {
-      dialogVisible.value = true
-      console.log(row);
-      
-      alertDetail.alertTitle = row.alertTitle
-      alertDetail.alertDesc = row.alertDesc
-      alertDetail.alertTime = row.triggerTime
-    }
-  },
-}
-
-onMounted(() => {
-  
-})
 </script>
 
 <style lang="scss" scoped>
-.title {
-  font-size: 20px;
-  padding: 10px 0;
-  color: #000;
-}
-
-.titleClass {
-  font-size: 30px;
-  font-weight: lighter;
-  color: #000;
-}
-
-.main {
-  line-height: 25px;
-  text-indent: 2em;
-  font-size: 16px;
+.footer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
 }
 </style>

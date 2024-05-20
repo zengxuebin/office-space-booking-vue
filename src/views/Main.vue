@@ -10,9 +10,21 @@
             <router-link v-for="(item, index) in menuItems" :key="index" class="header-btn"
               :class="{ active: currentIndex === index }" :to="item.link" @click="setCurrentIndex(index)">{{ item.name
               }}</router-link>
-            <el-button class="header-btn login-btn">登录</el-button>
+            <el-dropdown class="header-btn" @command="handleCommand" trigger="click">
+              <span class="el-dropdown-link">
+                {{ userInfo.username }}<el-icon class="el-icon--right"><arrow-down /></el-icon>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item :icon="Star" command="toFavorute">我的收藏</el-dropdown-item>
+                  <el-dropdown-item :icon="Position" command="toCreateAppointment">我发起的邀约</el-dropdown-item>
+                  <el-dropdown-item :icon="CircleCheck" command="toPendingAppointment">我收到的邀约</el-dropdown-item>
+                  <el-dropdown-item :icon="SwitchButton" command="toLogin">退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
             <span class="manager" @click="toManager">前往管理后台</span>
-            <router-link to="/manager/index"></router-link>
+            <router-link to="/index"></router-link>
           </div>
         </div>
       </div>
@@ -33,21 +45,57 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useMenuStore } from "@/stores/menu"
+import useUserStore from '@/stores/user'
+
+const handleCommand = (command: string) => {
+  if (command === 'toFavorute') {
+    router.push('/userFavorite')
+  } else if (command === 'toCreateAppointment') {
+    router.push('/createAppointment')
+  } else if (command === 'toPendingAppointment') {
+    router.push('/pendingAppointment')
+  } else {
+    router.push('/login')
+  }
+}
+
+const store = useMenuStore()
+
+import {
+  Star,
+  CircleCheck,
+  Position,
+  SwitchButton
+} from '@element-plus/icons-vue'
+import { getInfo } from '@/api/login';
+
+const userInfo = reactive({
+  id: 1,
+  username: '',
+})
+
+getInfo().then(res => {
+  const userDTO = res.data.sysUserDTO
+  userInfo.id = userDTO.id
+  userInfo.username = userDTO.username
+})
+
+
 
 // 定义响应式数据  
 const menuItems = ref([
   { name: '首页', link: '/home' },
-  { name: '关于我们', link: '/main/test2' },
-  { name: '产品', link: '/products' },
-  { name: '联系我们', link: '/contact' },
-]);
+  { name: '共享工位预约', link: '/officeSpace' },
+  { name: '公共场馆预约', link: '/space' },
+])
 
-const currentIndex = ref(1)
+const currentIndex = computed(() => store.menu)
 
 const setCurrentIndex = (index: number) => {
-  currentIndex.value = index;
+  store.switchMenu(index)
 }
 
 const router = useRouter()
@@ -57,7 +105,7 @@ const toHome = () => {
 }
 
 const toManager = () => {
-  router.push('/manager/index')
+  router.push('/index')
 }
 </script>
 

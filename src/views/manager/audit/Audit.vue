@@ -1,53 +1,134 @@
 <template>
   <div style="overflow: hidden; width: 100%; height: 100%;">
-    <vxe-grid ref='xGrid' v-bind="gridOptions" v-on="gridEvent">
+    <vxe-grid ref='xGrid' v-bind="gridOptions">
       <template #toolbar_buttons>
-        <vxe-button status="primary" icon="vxe-icon-send" @click="releaseAlert">同意</vxe-button>
-        <vxe-button status="warning" icon="vxe-icon-undo" @click="ignoreAlert">忽略</vxe-button>
-        <vxe-button status="danger" icon="vxe-icon-repeat" @click="refuseAudit">拒绝</vxe-button>
+        <vxe-button status="primary" icon="vxe-icon-send" @click="batchApproveAudit">通过</vxe-button>
+        <vxe-button status="danger" icon="vxe-icon-repeat" @click="batchRejectAudit">拒绝</vxe-button>
       </template>
-      <template #alertStatus="{ row }">
-        <el-tag size='large' type="warning">待发布</el-tag>
+      <template #operate="{ row }">
+        <vxe-button status="primary" icon="vxe-icon-send" @click="approveAudit(row)">通过</vxe-button>
+        <vxe-button status="danger" icon="vxe-icon-repeat" @click="rejectAudit(row)">拒绝</vxe-button>
       </template>
     </vxe-grid>
-    <el-dialog v-model="dialogFormVisible" title="预警详情" align-center>
-      <el-form :model="descForm">
-        <el-form-item label="预警详情">
-          <el-input v-model="descForm.alertDesc" :autosize="{ minRows: 2, maxRows: 4 }" type="textarea"
-            placeholder="请输入预警详情" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="dialogFormVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveAlertDesc">
-            确认
-          </el-button>
-        </span>
-      </template>
+
+    <el-dialog v-model="dialogFormVisible" :title=title width="500" align-center>
+
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
-import type { VXETable, VxeGridInstance, VxeGridListeners, VxeGridProps } from 'vxe-table'
-import XEUtils from 'xe-utils'
 import { ElMessage, ElMessageBox } from 'element-plus'
-
-const xGrid = ref<VxeGridInstance>()
+import { onMounted, reactive, ref, watchEffect } from 'vue'
+import type { VxeGridInstance, VxeGridProps } from 'vxe-table'
+import { getDictOption } from '@/api/system/dict'
+import { getReservePage } from '@/api/reserve'
+import { convertDict } from '@/utils/dictUtil'
+import { approveReserve, batchApproveReserve, rejectReserve, batchRejectReserve } from "@/api/audit"
+import { getUserOption } from '@/api/option'
+import { getSpaceOption } from '@/api/option'
 
 const dialogFormVisible = ref(false)
-const descForm = reactive({
-  alertDesc: '',
+const title = ref('')
+
+const statuses = ref<any[]>([])
+const users = ref<any[]>([])
+const spaces = ref<any[]>([])
+
+onMounted(() => {
+  getDictOption('biz_reserve_status').then(res => {
+    console.log(res.data)
+    statuses.value = res.data
+  })
+
+  getUserOption().then(res => {
+    users.value = res.data
+  })
+
+  getSpaceOption().then(res => {
+    spaces.value = res.data
+  })
 })
 
-const ignoreAlert = () => {
+watchEffect(() => {
+  if (statuses.value.length) {
+    const { formConfig } = gridOptions
+    formConfig.items[1].itemRender.options = statuses.value
+  }
+
+  if (users.value.length) {
+    const { formConfig } = gridOptions
+    formConfig.items[2].itemRender.options = users.value
+  }
+})
+
+const approveAudit = (row: any) => {
+  console.log(row)
+  ElMessageBox.confirm(
+    '此操作将审核通过该共享空间预约单，并告知用户，此操作不可逆，是否继续？',
+    '通过',
+    {
+      confirmButtonText: '继续',
+      cancelButtonText: '取消',
+      type: 'success',
+    }
+  )
+    .then(() => {
+      console.log(row.id);
+
+      approveReserve(row.id).then(res => {
+        xGrid.value.commitProxy('query')
+        ElMessage({
+          type: 'success',
+          message: '审核成功！',
+        })
+      })
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '您取消了该操作',
+      })
+    })
+}
+
+const rejectAudit = (row: any) => {
+  console.log(row)
+  ElMessageBox.confirm(
+    '此操作将审核拒绝该共享空间预约单，并告知用户，此操作不可逆，是否继续？',
+    '拒绝',
+    {
+      confirmButtonText: '继续',
+      cancelButtonText: '取消',
+      type: 'success',
+    }
+  )
+    .then(() => {
+      console.log(row.id)
+
+      rejectReserve(row.id).then(res => {
+        xGrid.value.commitProxy('query')
+        ElMessage({
+          type: 'success',
+          message: '审核成功！',
+        })
+      })
+    })
+    .catch(() => {
+      ElMessage({
+        type: 'info',
+        message: '您取消了该操作',
+      })
+    })
+}
+
+
+const batchApproveAudit = () => {
   if (xGrid.value) {
     const rows = xGrid.value.getCheckboxRecords(true)
     if (rows && rows.length >= 1) {
       ElMessageBox.confirm(
-        '此操作将忽略共享空间预约单使其流程结束，用户无法感知，此操作不可逆，是否继续？',
+        '此操作审核通过所有选中共享空间预约单，并告知用户，此操作不可逆，是否继续？',
         '警告',
         {
           confirmButtonText: '继续',
@@ -59,34 +140,34 @@ const ignoreAlert = () => {
           let rowList: any[] = []
           rows.forEach(item => {
             console.log(item);
-            rowList.push(item.alertId)
+            rowList.push(item.id)
           })
-          // handleAlertIgnore(rowList).then(res => {
-          //   if (xGrid.value) {
-          //     xGrid.value.commitProxy('query')
-          //   }
-          //   ElMessage({
-          //     type: 'success',
-          //     message: '忽略预警信息成功，所选预警信息流程已终止',
-          //   })
-          // })
+          batchApproveReserve(rowList).then(res => {
+            if (xGrid.value) {
+              xGrid.value.commitProxy('query')
+            }
+            ElMessage({
+              type: 'success',
+              message: '审核所选预约单成功！',
+            })
+          })
         })
         .catch(() => {
           ElMessage({
             type: 'info',
-            message: '取消忽略共享空间预约单',
+            message: '取消审核通过选中共享空间预约单',
           })
         })
     } else {
       ElMessage({
-        message: '您需要选择需要忽略的共享空间预约单',
+        message: '您需要选择需要审核通过的共享空间预约单',
         type: 'warning',
       })
     }
   }
 }
 
-const refuseAudit = () => {
+const batchRejectAudit = () => {
   if (xGrid.value) {
     const rows = xGrid.value.getCheckboxRecords(true)
     if (rows && rows.length >= 1) {
@@ -103,17 +184,17 @@ const refuseAudit = () => {
           let rowList: any[] = []
           rows.forEach(item => {
             console.log(item);
-            rowList.push(item.alertId)
+            rowList.push(item.id)
           })
-          // handleAlertIgnore(rowList).then(res => {
-          //   if (xGrid.value) {
-          //     xGrid.value.commitProxy('query')
-          //   }
-          //   ElMessage({
-          //     type: 'success',
-          //     message: '忽略预警信息成功，所选预警信息流程已终止',
-          //   })
-          // })
+          batchRejectReserve(rowList).then(res => {
+            if (xGrid.value) {
+              xGrid.value.commitProxy('query')
+            }
+            ElMessage({
+              type: 'success',
+              message: '审核所选预约单成功！',
+            })
+          })
         })
         .catch(() => {
           ElMessage({
@@ -130,90 +211,7 @@ const refuseAudit = () => {
   }
 }
 
-const releaseAlert = () => {
-  if (xGrid.value) {
-    const rows = xGrid.value.getCheckboxRecords(true)
-    if (rows && rows.length >= 1) {
-      ElMessageBox.confirm(
-        '此操作将发布预警信息使其流转到待推送状态，是否继续？',
-        '发布',
-        {
-          confirmButtonText: '继续',
-          cancelButtonText: '取消',
-          type: 'success',
-        }
-      )
-        .then(() => {
-          let rowList: any[] = []
-          rows.forEach(item => {
-            console.log(item);
-            rowList.push(item.alertId)
-          })
-          // handleAlertRelease(rowList).then(res => {
-          //   if (xGrid.value) {
-          //     xGrid.value.commitProxy('query')
-          //   }
-          //   ElMessage({
-          //     type: 'success',
-          //     message: '发布预警信息成功，等待相关工作人员推送',
-          //   })
-          // })
-        })
-        .catch(() => {
-          ElMessage({
-            type: 'info',
-            message: '取消通过该共享空间预约单',
-          })
-        })
-    } else {
-      ElMessage({
-        message: '请选择您需要通过的共享空间预约空间单',
-        type: 'warning',
-      })
-    }
-  }
-}
-
-const saveAlertDesc = () => {
-  dialogFormVisible.value = false
-  ElMessage({
-    message: '保存预警详情成功',
-    type: 'success',
-  })
-}
-
-const stationList: any = ref([])
-
-// getAllStation().then(res => {
-//   res.data.forEach((item: any) => {
-//     stationList.value.push({
-//       value: item.stationNo,
-//       label: item.stationProvince + item.stationCity + item.stationName + '站'
-//     })
-//   })
-
-//   const { formConfig } = gridOptions
-//   let stationItem
-//   if (formConfig?.items) {
-//     stationItem = formConfig.items[6]
-//   }
-//   if (stationItem && stationItem.itemRender) {
-//     stationItem.itemRender.options = stationList.value
-//   }
-// })
-
-const alertRuleList: any = ref([])
-
-// getAllAlertRule().then(res => {
-//   res.data.forEach((item: any) => {
-//     alertRuleList.value.push({
-//       value: item.ruleId,
-//       label: item.ruleName,
-//     })
-//   })
-//   console.log(res.data);
-
-// })
+const xGrid = ref<VxeGridInstance>()
 
 const gridOptions = reactive<VxeGridProps>({
   border: true,
@@ -229,7 +227,7 @@ const gridOptions = reactive<VxeGridProps>({
   // 行配置信息
   rowConfig: {
     // 自定义行数据唯一主键的字段名（默认自动生成）
-    keyField: 'alertId',
+    keyField: 'dictId',
     // 当鼠标移到行时，是否要高亮当前行
     isHover: true
   },
@@ -269,134 +267,44 @@ const gridOptions = reactive<VxeGridProps>({
     titleOverflow: true,
     items: [
       {
-        field: 'alertTitle',
-        title: '预警标题',
+        field: 'topic',
+        title: '预约主题',
         span: 6,
         itemRender: {
           name: '$input',
           props: {
-            placeholder: '请输入预警信息标题'
+            placeholder: '请输入预约单主题'
           }
         }
       },
       {
-        field: 'alertType',
-        title: '预警类型',
+        field: 'status',
+        title: '预约状态',
         span: 6,
         itemRender: {
           name: '$select',
           options: [],
           props: {
-            placeholder: '请选择预警类型'
+            placeholder: '请选择预约状态'
           }
         }
       },
       {
-        field: 'alertStatus',
-        title: '预警状态',
+        field: 'userId',
+        title: '预约用户',
         span: 6,
         itemRender: {
           name: '$select',
-          options: [
-            { label: '待发布', value: '0' }
-          ],
+          options: [],
           props: {
-            placeholder: '请选择预警状态',
-          },
-          defaultValue: '0'
-        }
-      },
-      {
-        field: 'alertLevel',
-        title: '预警级别',
-        span: 6,
-        folding: true,
-        itemRender: {
-          name: '$select',
-          options: [
-            { label: '白色', value: '白色' },
-            { label: '蓝色', value: '蓝色' },
-            { label: '黄色', value: '黄色' },
-            { label: '橙色', value: '橙色' },
-            { label: '红色', value: '红色' },
-          ],
-          props: {
-            placeholder: '请选择预警级别',
-          },
-        }
-      },
-      //       private String alertTitle;
-      // private String alertType;
-      // private String alertStatus;
-      // private String alertLevel;
-      // private String alertRuleId;
-      // private String alertSource;
-      // private String alertAreaId;
-      {
-        field: 'alertType',
-        title: '预警规则',
-        span: 6,
-        folding: true,
-        itemRender: {
-          name: '$select',
-          options: [
-            { label: '台风', value: 'type_01' },
-            { label: '暴雨', value: 'type_02' },
-            { label: '暴雪', value: 'type_03' },
-            { label: '寒潮', value: 'type_04' },
-            { label: '大风', value: 'type_05' },
-            { label: '沙尘暴', value: 'type_06' },
-            { label: '高温', value: 'type_07' },
-            { label: '干旱', value: 'type_08' },
-            { label: '雷电', value: 'type_09' },
-            { label: '冰雹', value: 'type_10' },
-            { label: '霜冻', value: 'type_11' },
-            { label: '大雾', value: 'type_12' },
-            { label: '霾', value: 'type_13' },
-            { label: '雷雨大风', value: 'type_14' },
-            { label: '空气重污染', value: 'type_15' },
-          ],
-          props: {
-            placeholder: '请选择预警规则',
-          },
-        }
-      },
-      {
-        field: 'alertSource',
-        title: '预警来源',
-        span: 6,
-        folding: true,
-        itemRender: {
-          name: '$select',
-          options: [
-            { label: '国家预警信息发布中心', value: '国家预警信息发布中心' }
-          ],
-          props: {
-            placeholder: '请选择预警来源',
-          },
-          defaultValue: '国家预警信息发布中心'
-        }
-      },
-      {
-        field: 'alertArea',
-        title: '影响区域',
-        span: 6,
-        folding: true,
-        itemRender: {
-          name: '$select',
-          options: [
-            { label: '', value: '' }
-          ],
-          props: {
-            placeholder: '请选择影响区域',
-          },
+            placeholder: '请选择预约用户'
+          }
         }
       },
       // 功能
       {
         span: 6,
         align: 'center',
-        collapseNode: true,
         itemRender: {
           name: '$buttons', children: [
             {
@@ -441,46 +349,40 @@ const gridOptions = reactive<VxeGridProps>({
     // 接收 Promise API
     ajax: {
       // 当点击工具栏查询按钮或者手动提交指令 query或reload 时会被触发
-      // query: ({ page, sorts, filters, form }) => {
-      //   return new Promise(resolve => {
-      //     const queryParams: any = Object.assign({}, form)
-      //     // 处理排序条件
-      //     const firstSort = sorts[0]
-      //     if (firstSort) {
-      //       queryParams.sort = firstSort.field
-      //       queryParams.order = firstSort.order
-      //     }
-      //     // 处理筛选条件
-      //     filters.forEach(({ field, values }) => {
-      //       queryParams[field] = values.join(',')
-      //     })
+      query: ({ page, sorts, filters, form }) => {
+        return new Promise(resolve => {
+          const queryParams: any = Object.assign({}, form)
 
-      //     // 请求参数
-      //     const data = {
-      //       pageNum: page.currentPage,
-      //       pageSize: page.pageSize,
-      //       entity: {
-      //         alertTitle: form.alertTitle,
-      //         alertType: form.alertType,
-      //         alertStatus: form.alertStatus,
-      //         alertLevel: form.alertLevel,
-      //         alertRuleId: form.alertRuleId,
-      //         alertSource: form.alertSource,
-      //         alertAreaId: form.alertAreaId,
-      //       }
-      //     }
-      //     generateReleaseAlert().then(res => {
-      //       // 调用方法
-      //       getPageReleaseAlert(data).then(res => {
-      //         const data = res.data
-      //         resolve({
-      //           records: data.records,
-      //           total: data.total
-      //         })
-      //       })
-      //     })
-      //   })
-      // },
+          console.log(page);
+
+          // 处理排序条件
+          const firstSort = sorts[0]
+          if (firstSort) {
+            queryParams.sort = firstSort.field
+            queryParams.order = firstSort.order
+          }
+          // 请求参数
+          const data = {
+            pageNum: page.currentPage,
+            pageSize: page.pageSize,
+            entity: {
+              topic: form.topic,
+              userId: form.userId,
+              status: form.status,
+            }
+          }
+          console.log(data);
+
+          // 调用方法
+          getReservePage(data).then(res => {
+            const data = res.data
+            resolve({
+              records: data.records,
+              total: data.total
+            })
+          })
+        })
+      },
       delete: ({ body }) => {
         return new Promise((resolve, reject) => {
 
@@ -493,100 +395,73 @@ const gridOptions = reactive<VxeGridProps>({
       type: 'checkbox',
       width: 60,
       align: "center",
-      fixed: 'left'
+      fixed: 'left',
     },
     {
       title: '序号',
       type: 'seq',
       align: "center",
-      width: 60
+      width: 60,
     },
     {
-      field: 'alertTitle',
-      title: '预警信息标题',
+      field: 'userId',
+      title: '预约用户',
+      align: "center",
+      width: 120,
+      formatter: ({ cellValue }) => {
+        return convertDict(users.value, cellValue)
+      }
+    },
+    {
+      field: 'topic',
+      title: '预约主题',
       align: "center",
       width: 150,
     },
     {
-      field: 'alertAreaId',
-      title: '影响区域',
-      align: "center",
-      width: 180,
-      formatter: ({ cellValue }) => {
-        let res = ''
-        stationList.value.forEach((item: { value: any; label: any }) => {
-          if (cellValue === item.value) {
-            res = item.label;
-          }
-        })
-        return res
-      }
-    },
-    {
-      field: 'alertRuleId',
-      title: '关联预警规则',
-      align: "center",
-      width: 180,
-      formatter: ({ cellValue }) => {
-        let res = ''
-        alertRuleList.value.forEach((item: { value: any; label: any }) => {
-          if (cellValue === item.value) {
-            res = item.label;
-          }
-        })
-        return res
-      }
-    },
-    {
-      field: 'triggerValue',
-      title: '触发预警监测值',
+      field: 'spaceId',
+      title: '空间名称',
       align: "center",
       width: 150,
+      formatter: ({ cellValue }) => {
+        return convertDict(spaces.value, cellValue)
+      }
     },
     {
-      field: 'alertStatus',
-      title: '预警状态',
-      align: "center",
-      width: 120,
-      slots: {
-        default: 'alertStatus',
-      },
-    },
-    {
-      field: 'alertType',
-      title: '预警类型',
-      align: "center",
-      width: 120,
-    },
-    {
-      field: 'alertLevel',
-      title: '预警级别',
-      align: "center",
-      width: 120,
-    },
-    {
-      field: 'alertSource',
-      title: '预警来源',
-      align: "center",
-      width: 180,
-    },
-    {
-      field: 'triggerTime',
-      title: '预警触发时间',
+      field: 'reserveTime',
+      title: '预约时间',
       align: "center",
       width: 180,
     },
     {
       field: 'startTime',
-      title: '预警开始时间',
+      title: '预约开始时间',
       align: "center",
       width: 180,
     },
     {
       field: 'endTime',
-      title: '预警结束时间',
+      title: '预约结束时间',
       align: "center",
       width: 180,
+    },
+    {
+      field: 'status',
+      title: '预约状态',
+      align: "center",
+      width: 120,
+      formatter: ({ cellValue }) => {
+        return convertDict(statuses.value, cellValue)
+      }
+    },
+    {
+      title: '操作',
+      align: "center",
+      width: 200,
+      fixed: 'right',
+      slots: {
+        default: 'operate'
+      }
     },
   ],
   checkboxConfig: {
@@ -595,42 +470,12 @@ const gridOptions = reactive<VxeGridProps>({
     range: true
   },
 })
-
-const gridEvent: VxeGridListeners = {
-}
-
-onMounted(() => {
-  const typeList = [
-    { label: '天气预警', value: '天气预警' },
-    { label: '环境预警', value: '环境预警' },
-  ]
-  const { formConfig } = gridOptions
-
-  if (formConfig && formConfig.items) {
-    const sexItem = formConfig.items[1]
-    if (sexItem && sexItem.itemRender) {
-      sexItem.itemRender.options = typeList
-    }
-  }
-})
 </script>
 
 <style lang="scss" scoped>
-.title {
-  font-size: 20px;
-  padding: 10px 0;
-  color: #000;
-}
-
-.titleClass {
-  font-size: 30px;
-  font-weight: lighter;
-  color: #000;
-}
-
-.main {
-  line-height: 25px;
-  text-indent: 2em;
-  font-size: 16px;
+.footer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
 }
 </style>

@@ -5,25 +5,29 @@
       <el-aside width="280px" class="search-aside">
         <div class="search">
           <el-select v-model="value" size="large" style="width: 240px" :empty-values="[null]" :value-on-clear="null">
-            <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in locations" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </div>
         <el-divider />
         <div class="search">
           <h3>资源类型</h3>
-          <el-radio-group v-model="radio">
-            <el-radio :value="3">Option A</el-radio>
-            <el-radio :value="6">Option B</el-radio>
-            <el-radio :value="9">Option C</el-radio>
+          <el-radio-group v-model="type" style="display: block;">
+            <el-radio :value="1" style="display: block;">开放式工位</el-radio>
+            <el-radio :value="2" style="display: block;">独立办公室</el-radio>
+            <el-radio :value="3" style="display: block;">会议室</el-radio>
+            <el-radio :value="4" style="display: block;">体育场馆</el-radio>
+            <el-radio :value="5" style="display: block;">报告厅</el-radio>
           </el-radio-group>
         </div>
         <el-divider />
         <div class="search">
           <h3>可容纳人数</h3>
-          <el-radio-group v-model="radio">
-            <el-radio :value="3">Option A</el-radio>
-            <el-radio :value="6">Option B</el-radio>
-            <el-radio :value="9">Option C</el-radio>
+          <el-radio-group v-model="personNum" style="display: block;">
+            <el-radio :value="1" style="display: block;">10人以下</el-radio>
+            <el-radio :value="2" style="display: block;">11-50人</el-radio>
+            <el-radio :value="3" style="display: block;">51-100人</el-radio>
+            <el-radio :value="4" style="display: block;">101-150人</el-radio>
+            <el-radio :value="5" style="display: block;">151-200人</el-radio>
           </el-radio-group>
         </div>
       </el-aside>
@@ -59,6 +63,18 @@
 import { ref, reactive } from 'vue'
 import SpaceView from "@/components/SpaceView.vue"
 import { Search } from '@element-plus/icons-vue'
+import { getLocationOption } from "@/api/option"
+
+const locations = ref<any[]>([])
+
+getLocationOption().then(res => {
+  console.log(res.data)
+  res.data.push({
+    value: '',
+    label: 'All',
+  },)
+  locations.value = res.data
+})
 
 const pageVO2 = reactive({
   currentPage: 1,
@@ -73,34 +89,8 @@ const pageChangeEvent2 = () => {
 
 const value = ref('')
 
-const options = [
-  {
-    value: '',
-    label: 'All',
-  },
-  {
-    value: 'Option1',
-    label: 'Option1',
-  },
-  {
-    value: 'Option2',
-    label: 'Option2',
-  },
-  {
-    value: 'Option3',
-    label: 'Option3',
-  },
-  {
-    value: 'Option4',
-    label: 'Option4',
-  },
-  {
-    value: 'Option5',
-    label: 'Option5',
-  },
-]
-
-const radio = ref(3)
+const type = ref(1)
+const personNum = ref(1)
 
 const value1 = ref('2024-03-03')
 

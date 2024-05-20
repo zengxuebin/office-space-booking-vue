@@ -1,32 +1,52 @@
 <template>
   <div style="overflow: hidden; width: 100%; height: 100%;">
     <vxe-grid ref='xGrid' v-bind="gridOptions">
-      <template #alert_status="{ row }">
-        <el-tag size='large'>正常</el-tag>
-      </template>
-      <template #operator="{ row }">
-        <el-tag size='large' type="warning" v-if="row.operator === '>='">大于等于</el-tag>
-        <el-tag size='large' type="warning" v-else-if="row.operator === '<='">小于等于</el-tag>
-        <el-tag size='large' type="warning" v-else-if="row.operator === '='">等于</el-tag>
-        <el-tag size='large' type="warning" v-else-if="row.operator === '!='">不等于</el-tag>
-        <el-tag size='large' type="warning" v-else-if="row.operator === '>'">大于</el-tag>
-        <el-tag size='large' type="warning" v-else>小于</el-tag>
-      </template>
-      <template #alert_level="{ row }">
-        <span v-if="row.alertLevel === '红色'" style="color: #c63f34;">{{ row.alertLevel }}</span>
-        <span v-else-if="row.alertLevel === '橙色'" style="color: #f2a747;">{{ row.alertLevel }}</span>
-        <span v-else-if="row.alertLevel === '黄色'" style="color: #f6bd0e;">{{ row.alertLevel }}</span>
-        <span v-else style="color: #4064f6;">{{ row.alertLevel }}</span>
-      </template>
     </vxe-grid>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { onMounted, reactive, ref } from 'vue'
-import type { VXETable, VxeGridInstance, VxeGridProps } from 'vxe-table'
-import XEUtils from 'xe-utils'
+import { onMounted, reactive, ref, watchEffect } from 'vue'
+import type { VxeGridInstance, VxeGridProps } from 'vxe-table'
+import { getDictOption } from '@/api/system/dict'
+import { convertDict } from '@/utils/dictUtil'
+import { getTransactionPage } from '@/api/transaction'
+import { getAccountOption } from "@/api/option"
+
+const accounts = ref<any[]>([])
+const types = ref<any[]>([])
+const statuses = ref<any[]>([])
+
+onMounted(() => {
+  getAccountOption().then(res => {
+    accounts.value = res.data
+  })
+
+  getDictOption('biz_transaction_type').then(res => {
+    console.log(res.data)
+    types.value = res.data
+  })
+
+  getDictOption('biz_transaction_status').then(res => {
+    statuses.value = res.data
+  })
+})
+
+watchEffect(() => {
+  if (accounts.value.length) {
+    const { formConfig } = gridOptions
+    formConfig.items[0].itemRender.options = accounts.value
+  }
+
+  if (types.value.length) {
+    const { formConfig } = gridOptions
+    formConfig.items[1].itemRender.options = types.value
+  }
+  if (statuses.value.length) {
+    const { formConfig } = gridOptions
+    formConfig.items[2].itemRender.options = statuses.value
+  }
+})
 
 const xGrid = ref<VxeGridInstance>()
 
@@ -44,7 +64,7 @@ const gridOptions = reactive<VxeGridProps>({
   // 行配置信息
   rowConfig: {
     // 自定义行数据唯一主键的字段名（默认自动生成）
-    keyField: 'ruleId',
+    keyField: 'dictId',
     // 当鼠标移到行时，是否要高亮当前行
     isHover: true
   },
@@ -84,36 +104,38 @@ const gridOptions = reactive<VxeGridProps>({
     titleOverflow: true,
     items: [
       {
-        field: 'ruleName',
-        title: '预警规则名称',
-        span: 6,
-        itemRender: {
-          name: '$input',
-          props: {
-            placeholder: '请输入预警规则名称'
-          }
-        }
-      },
-      {
-        field: 'alertLevel',
-        title: '预警级别',
+        field: 'accountId',
+        title: '所属账户',
         span: 6,
         itemRender: {
           name: '$select',
           options: [],
           props: {
-            placeholder: '请选择预警级别'
+            placeholder: '请选择账户'
           }
         }
       },
       {
-        field: 'metric',
-        title: '预警监测指标',
+        field: 'type',
+        title: '交易类型',
         span: 6,
         itemRender: {
-          name: '$input',
+          name: '$select',
+          options: [],
           props: {
-            placeholder: '请输入预警监测指标'
+            placeholder: '请选择交易类型'
+          }
+        }
+      },
+      {
+        field: 'status',
+        title: '交易状态',
+        span: 6,
+        itemRender: {
+          name: '$select',
+          options: [],
+          props: {
+            placeholder: '请选择交易状态'
           }
         }
       },
@@ -162,42 +184,40 @@ const gridOptions = reactive<VxeGridProps>({
     // 接收 Promise API
     ajax: {
       // 当点击工具栏查询按钮或者手动提交指令 query或reload 时会被触发
-      // query: ({ page, sorts, filters, form }) => {
-      //   return new Promise(resolve => {
-      //     const queryParams: any = Object.assign({}, form)
-      //     // 处理排序条件
-      //     const firstSort = sorts[0]
-      //     if (firstSort) {
-      //       queryParams.sort = firstSort.field
-      //       queryParams.order = firstSort.order
-      //     }
-      //     // 处理筛选条件
-      //     filters.forEach(({ field, values }) => {
-      //       queryParams[field] = values.join(',')
-      //     })
+      query: ({ page, sorts, filters, form }) => {
+        return new Promise(resolve => {
+          const queryParams: any = Object.assign({}, form)
 
-      //     console.log(form);
-          
-      //     // 请求参数
-      //     const data = {
-      //       pageNum: page.currentPage,
-      //       pageSize: page.pageSize,
-      //       entity: {
-      //         ruleName: form.ruleName,
-      //         alertLevel: form.alertLevel,
-      //         metric: form.metric,
-      //       }
-      //     }
-      //     // 调用方法
-      //     getPageAlertRule(data).then(res => {
-      //       const data = res.data
-      //       resolve({
-      //         records: data.records,
-      //         total: data.total
-      //       })
-      //     })
-      //   })
-      // },
+          console.log(page);
+
+          // 处理排序条件
+          const firstSort = sorts[0]
+          if (firstSort) {
+            queryParams.sort = firstSort.field
+            queryParams.order = firstSort.order
+          }
+          // 请求参数
+          const data = {
+            pageNum: page.currentPage,
+            pageSize: page.pageSize,
+            entity: {
+              accountId: form.accountId,
+              type: form.type,
+              status: form.status,
+            }
+          }
+          console.log(data);
+
+          // 调用方法
+          getTransactionPage(data).then(res => {
+            const data = res.data
+            resolve({
+              records: data.records,
+              total: data.total
+            })
+          })
+        })
+      },
       delete: ({ body }) => {
         return new Promise((resolve, reject) => {
 
@@ -207,120 +227,43 @@ const gridOptions = reactive<VxeGridProps>({
   },
   columns: [
     {
-      type: 'checkbox',
-      width: 60,
-      align: "center",
-      fixed: 'left'
-    },
-    {
       title: '序号',
       type: 'seq',
       align: "center",
-      width: 60
     },
     {
-      field: 'ruleName',
-      title: '预警规则名称',
+      field: 'accountId',
+      title: '账户名',
       align: "center",
-      width: 200,
-    },
-    {
-      field: 'metric',
-      title: '预警监测指标',
-      align: "center",
-      width: 150,
       formatter: ({ cellValue }) => {
-        if (cellValue === 'temperature') {
-          return '温度'
-        } else if (cellValue === 'windSpeed') {
-          return '风速'
-        } else if (cellValue === 'precipitation') {
-          return '降水量'
-        } else if (cellValue === 'visibility') {
-          return '能见度'
-        } else if (cellValue === 'humidity') {
-          return '湿度'
-        } else if (cellValue === 'aqi') {
-          return 'AQI'
-        } else {
-          return 'PM2.5'
-        }
+        return convertDict(accounts.value, cellValue)
       }
     },
     {
-      field: 'operator',
-      title: '比较操作符',
+      field: 'type',
+      title: '交易类型',
       align: "center",
-      width: 120,
-      slots: {
-        default: 'operator',
-      },
+      formatter: ({ cellValue }) => {
+        return convertDict(types.value, cellValue)
+      }
     },
     {
-      field: 'threshold',
-      title: '预警触发阈值',
+      field: 'amount',
+      title: '交易金额',
       align: "center",
-      width: 120,
     },
     {
-      field: 'alertLevel',
-      title: '预警级别',
+      field: 'status',
+      title: '交易状态',
       align: "center",
-      width: 120,
-      slots: {
-        default: 'alert_level',
-      },
+      formatter: ({ cellValue }) => {
+        return convertDict(statuses.value, cellValue)
+      }
     },
     {
-      field: 'priority',
-      title: '预警优先级',
+      field: 'time',
+      title: '交易时间',
       align: "center",
-      width: 120,
-    },
-    {
-      field: 'alertStatus',
-      title: '预警状态',
-      align: "center",
-      width: 120,
-      slots: {
-        default: 'alert_status',
-      },
-    },
-    {
-      field: 'ruleDesc',
-      title: '预警描述',
-      align: "center",
-      width: 300,
-    },
-    {
-      field: 'createBy',
-      title: '创建者',
-      align: "center",
-      width: 120,
-    },
-    {
-      field: 'createTime',
-      title: '创建时间',
-      align: "center",
-      width: 180,
-    },
-    {
-      field: 'updateBy',
-      title: '更新者',
-      align: "center",
-      width: 120,
-    },
-    {
-      field: 'updateTime',
-      title: '更新时间',
-      align: "center",
-      width: 180,
-    },
-    {
-      field: 'remark',
-      title: '备注',
-      align: "center",
-      width: 200,
     },
   ],
   checkboxConfig: {
@@ -329,38 +272,12 @@ const gridOptions = reactive<VxeGridProps>({
     range: true
   },
 })
-
-onMounted(() => {
-  const levelList = [
-    { label: '红色', value: '红色' },
-    { label: '橙色', value: '橙色' },
-    { label: '黄色', value: '黄色' },
-    { label: '蓝色', value: '蓝色' },
-  ]
-  const { formConfig } = gridOptions
-
-  if (formConfig && formConfig.items) {
-    const levelItem = formConfig.items[1]
-    if (levelItem && levelItem.itemRender) {
-      levelItem.itemRender.options = levelList
-    }
-  }
-})
-
-const editLocation = () => {
-  if (xGrid.value) {
-    const rows = xGrid.value.getCheckboxRecords(true)
-    if (rows && rows.length == 1) {
-      // dialogFormVisible.value = true
-      // descForm.alertDesc = rows[0].alertDesc
-    } else {
-      ElMessage({
-        message: '您只能选择一条预警信息进行编辑',
-        type: 'warning',
-      })
-    }
-  }
-}
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.footer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+</style>

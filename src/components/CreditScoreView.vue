@@ -84,7 +84,7 @@ series: [
     },
     data: [
       {
-        value: 0.7,
+        value: 1,
         name: '信誉分'
       }
     ]

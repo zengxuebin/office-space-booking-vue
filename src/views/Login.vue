@@ -83,7 +83,7 @@ const handleLogin = (formEl: FormInstance | undefined) => {
       })
       userStore.loginUser(userForm).then(() => {
         console.log("登陆成功");
-        router.push('/index')
+        router.push('/home')
       }).catch(() => {
         loading.value = false
       })

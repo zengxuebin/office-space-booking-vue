@@ -6,10 +6,10 @@
     <div class="content">
       <div class="content-share">
         <PageHome @click="toBooking" icons="/src/assets/images/open-space.png" title="开放式工位" tips="前往进行工位预约"class="option" />
-        <PageHome icons="/src/assets/images/space-query.png" title="会议室" tips="开放与忙闲状态查询"class="border" />
-        <PageHome icons="/src/assets/images/space-other.png" title="“X”" tips="其他共享空间" class="border" />
+        <PageHome @click="toMeeting" icons="/src/assets/images/space-query.png" title="会议室" tips="开放与忙闲状态查询"class="border" />
+        <PageHome @click="toBooking" icons="/src/assets/images/space-other.png" title="“X”" tips="其他共享空间" class="border" />
       </div>
-      <PageHome icons="/src/assets/images/space-public.png" title="公共场馆预约" style="margin-left: 24px;" />
+      <PageHome @click="toMeeting" icons="/src/assets/images/space-public.png" title="公共场馆预约" style="margin-left: 24px;" />
     </div>
   </div>
 </template>
@@ -17,12 +17,21 @@
 <script setup lang="ts">
 import PageHome from '@/components/PageHome.vue'
 import { useRouter } from 'vue-router'
+import { useMenuStore } from "@/stores/menu"
+const store = useMenuStore()
 
 const router = useRouter()
 
 const toBooking = () => {
-  router.push('/main/test')
+  store.switchMenu(1)
+  router.push('/officeSpace')
 }
+
+const toMeeting = () => {
+  store.switchMenu(2)
+  router.push('/space')
+}
+
 
 </script>
 

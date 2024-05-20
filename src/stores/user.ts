@@ -4,7 +4,7 @@ import { login, getInfo, logout } from '@/api/login'
 import router from '@/router'
 
 export const useUserStore = defineStore('user', () => {
-  const token = ref(localStorage.getItem('token'))
+  const token = ref(sessionStorage.getItem('token'))
   const user  = ref()
   const roles = ref([])
   const permissions = ref([])
@@ -20,7 +20,7 @@ export const useUserStore = defineStore('user', () => {
       login(userInfo).then(res => {
         console.log("登录成功",res)
         
-        localStorage.setItem('token', res.data)
+        sessionStorage.setItem('token', res.data)
         token.value = res.token
         console.log(res);
         resolve(res)
@@ -39,6 +39,9 @@ export const useUserStore = defineStore('user', () => {
       getInfo().then(res => {
         console.log(res);
         resolve(res)
+        user.value = res.data.sysUserDTO
+        console.log(user.value);
+        
       }).catch(error => {
         reject(error)
       })
@@ -52,21 +55,21 @@ export const useUserStore = defineStore('user', () => {
   function logoutUser() {
     return new Promise((resolve, reject) => {
       logout().then(() => {
-        localStorage.removeItem('token')
+        sessionStorage.removeItem('token')
         token.value = ''
         roles.value = []
         permissions.value = []
         resolve('')
         router.push('/login')
       }).catch(error => {
-        localStorage.removeItem('token')
+        sessionStorage.removeItem('token')
         router.push('/login')
         reject(error)
       })
     })
   }
 
-  return { token, user, dept, roles, permissions, loginUser, logoutUser }
+  return { token, user, dept, roles, permissions, loginUser, logoutUser, getUserInfo }
 })
 
 export default useUserStore

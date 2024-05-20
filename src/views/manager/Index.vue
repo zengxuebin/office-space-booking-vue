@@ -3,7 +3,7 @@
     <el-row :gutter="16">
       <el-col :span="6">
         <div class="statistic-card">
-          <el-statistic :value="2000">
+          <el-statistic :value="summary.totalSpaceCount">
             <template #title>
               <div style="display: inline-flex; align-items: center; font-size: 14px;">
                 共享空间数量
@@ -30,7 +30,7 @@
       </el-col>
       <el-col :span="6">
         <div class="statistic-card">
-          <el-statistic :value="12">
+          <el-statistic :value="summary.totalReserveCount">
             <template #title>
               <div style="display: inline-flex; align-items: center; font-size: 14px;">
                 累计预约次数
@@ -58,11 +58,11 @@
       </el-col>
       <el-col :span="6">
         <div class="statistic-card">
-          <el-statistic :value="3">
+          <el-statistic :value="summary.totalUserCount">
             <template #title>
               <div style="display: inline-flex; align-items: center; font-size: 14px;">
                 累计预约人数
-                <el-tooltip effect="dark" content="从2023年1月1日至今系统存在的所有气象站点" placement="top">
+                <el-tooltip effect="dark" content="从2024年1月1日至今累计预约人数" placement="top">
                   <el-icon style="margin-left: 4px" :size="14">
                     <Warning />
                   </el-icon>
@@ -86,7 +86,7 @@
       </el-col>
       <el-col :span="6">
         <div class="statistic-card">
-          <el-statistic :value="1834">
+          <el-statistic :value="summary.totalAmount">
             <template #title>
               <div style="display: inline-flex; align-items: center; font-size: 14px;">
                 累计交易金额
@@ -102,7 +102,7 @@
             <div class="footer-item">
               <span>比昨日下降</span>
               <span class="red">
-                123
+                0
                 <el-icon>
                   <CaretBottom />
                 </el-icon>
@@ -141,6 +141,24 @@
 <script setup lang="ts">
 import SpaceCategorySummary from '@/components/SpaceCategorySummary.vue'
 import FreeSpaceSummary from '@/components/FreeSpaceSummary.vue'
+import { getSummary } from "@/api/index"
+import { reactive } from 'vue';
+
+const summary = reactive({
+  totalSpaceCount: 0,
+  totalReserveCount: 0,
+  totalUserCount: 0,
+  totalAmount: 0,
+})
+
+getSummary().then(res => {
+  const data = res.data
+  summary.totalAmount = data.totalAmount
+  summary.totalReserveCount = data.totalReserveCount
+  summary.totalSpaceCount = data.totalSpaceCount
+  summary.totalUserCount = data.totalUserCount
+})
+
 </script>
 
 <style lang="scss" scoped>

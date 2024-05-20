@@ -35,7 +35,7 @@
               <el-tag type="info" size="large">液晶屏</el-tag>
             </el-col>
             <el-col :span="9">
-              <el-button size="large">查看详情</el-button>
+              <el-button size="large" @click="getDetail">查看详情</el-button>
               <el-button type="primary" size="large">立即预约</el-button>
             </el-col>
           </el-row>
@@ -53,12 +53,17 @@ const url = '/src/assets/images/bar.jpg'
 import {
   Star,
 } from '@element-plus/icons-vue'
+import router from '@/router'
 
 const favorite = () => {
   ElMessage({
     message: '收藏成功！可在“我的收藏”查看和管理哦～',
     type: 'success',
   })
+}
+
+const getDetail = () => {
+  router.push('/officeSpaceDetail')
 }
 </script>
 

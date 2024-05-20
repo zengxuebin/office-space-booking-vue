@@ -5,7 +5,7 @@
       <el-aside width="250px" class="search-aside">
         <div class="search">
           <el-select v-model="value" size="large" style="width: 200px" :empty-values="[null]" :value-on-clear="null">
-            <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
+            <el-option v-for="item in locations" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </div>
         <div class="search">
@@ -53,6 +53,18 @@ import { ref, reactive } from 'vue'
 import SpaceView from "@/components/SpaceView.vue"
 import OfficeSpaceView from "@/components/OfficeSpaceView.vue"
 import { Search } from '@element-plus/icons-vue'
+import { getLocationOption } from "@/api/option"
+
+const locations = ref<any[]>([])
+
+getLocationOption().then(res => {
+  console.log(res.data)
+  res.data.push({
+    value: '',
+    label: 'All',
+  },)
+  locations.value = res.data
+})
 
 const pageVO2 = reactive({
   currentPage: 1,
@@ -67,32 +79,6 @@ const pageChangeEvent2 = () => {
 
 const value = ref('')
 
-const options = [
-  {
-    value: '',
-    label: 'All',
-  },
-  {
-    value: 'Option1',
-    label: 'Option1',
-  },
-  {
-    value: 'Option2',
-    label: 'Option2',
-  },
-  {
-    value: 'Option3',
-    label: 'Option3',
-  },
-  {
-    value: 'Option4',
-    label: 'Option4',
-  },
-  {
-    value: 'Option5',
-    label: 'Option5',
-  },
-]
 
 const type = ref(0)
 const location = ref(1)

@@ -16,15 +16,15 @@ const options = ref({
   },
   series: [
     {
-      name: 'Access From',
+      name: '类别总览',
       type: 'pie',
       radius: '50%',
       data: [
-        { value: 1048, name: 'Search Engine' },
-        { value: 735, name: 'Direct' },
-        { value: 580, name: 'Email' },
-        { value: 484, name: 'Union Ads' },
-        { value: 300, name: 'Video Ads' }
+        { value: 80, name: '开放式工位' },
+        { value: 22, name: '独立办公室' },
+        { value: 51, name: '会议室' },
+        { value: 32, name: '体育场馆' },
+        { value: 20, name: '报告厅' }
       ],
       emphasis: {
         itemStyle: {

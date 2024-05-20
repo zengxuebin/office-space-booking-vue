@@ -86,9 +86,12 @@ onMounted(() => {
 })
 
 watchEffect(() => {
-  if (categories.value.length) {
+  if (locations.value.length) {
     const { formConfig } = gridOptions
     formConfig.items[1].itemRender.options = locations.value
+  }
+  if (categories.value.length) {
+    const { formConfig } = gridOptions
     formConfig.items[2].itemRender.options = categories.value
   }
 })

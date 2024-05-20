@@ -138,24 +138,6 @@ export const managerRoutes = [
     ]
   },
   {
-    path: '/favorite',
-    name: 'favorite',
-    hidden: false,
-    component: () => import('@/layout/Index.vue'),
-    children: [
-      {
-        path: '/favorite/manager',
-        name: 'favorite',
-        hidden: false,
-        meta: {
-          title: '用户收藏查询',
-          icon: 'vxe-icon-star-fill'
-        },
-        component: () => import('@/views/manager/Favorite.vue')
-      },
-    ]
-  },
-  {
     path: '/transaction',
     name: 'transaction',
     hidden: false,
@@ -238,7 +220,7 @@ export const managerRoutes = [
 const routes = [
   {
     path: '/',
-    redirect: '/home'
+    redirect: '/login'
   },
   {
     path: '/login',
@@ -266,11 +248,6 @@ const routes = [
         component: () => import('@/views/SpaceDetail.vue'),
       },
       {
-        path: 'test2',
-        name: 'Test2',
-        component: () => import('@/views/Test2.vue'),
-      },
-      {
         path: '/officeSpace',
         name: 'officeSpace',
         component: () => import('@/views/OfficeSpace.vue'),
@@ -296,8 +273,8 @@ const routes = [
         component: () => import('@/views/Favorite.vue'),
       },
       {
-        path: '/creditScore',
-        name: 'creditScore',
+        path: '/myCreditScore',
+        name: 'myCreditScore',
         component: () => import('@/views/CreditScore.vue'),
       }
     ]

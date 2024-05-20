@@ -5,6 +5,17 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import echarts from '@/components/echarts/Index.vue'
+import { getCurrentDate, getXBeforeDate } from "@/utils/dateUtil";
+
+const currentDate = getCurrentDate()
+const dates = [];
+
+for (let i = 0; i < 7; i++) {
+  dates.push(getXBeforeDate(currentDate, i, 'day'))
+}
+
+console.log(dates);
+
 
 const options = ref({
   tooltip: {
@@ -17,7 +28,7 @@ const options = ref({
     }
   },
   legend: {
-    data: ['Email', 'Union Ads', 'Video Ads', 'Direct', 'Search Engine']
+    data: ['开放式工位', '独立办公室', '会议室', '体育场馆', '报告厅']
   },
   toolbox: {
     feature: {
@@ -34,7 +45,7 @@ const options = ref({
     {
       type: 'category',
       boundaryGap: false,
-      data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+      data: dates
     }
   ],
   yAxis: [
@@ -44,47 +55,47 @@ const options = ref({
   ],
   series: [
     {
-      name: 'Email',
+      name: '开放式工位',
       type: 'line',
       stack: 'Total',
       areaStyle: {},
       emphasis: {
         focus: 'series'
       },
-      data: [120, 132, 101, 134, 90, 230, 210]
+      data: [1, 2, 1, 0, 0, 1, 2]
     },
     {
-      name: 'Union Ads',
+      name: '独立办公室',
       type: 'line',
       stack: 'Total',
       areaStyle: {},
       emphasis: {
         focus: 'series'
       },
-      data: [220, 182, 191, 234, 290, 330, 310]
+      data: [1, 2, 1, 0, 0, 1, 3]
     },
     {
-      name: 'Video Ads',
+      name: '会议室',
       type: 'line',
       stack: 'Total',
       areaStyle: {},
       emphasis: {
         focus: 'series'
       },
-      data: [150, 232, 201, 154, 190, 330, 410]
+      data: [0, 1, 1, 0, 0, 1, 0]
     },
     {
-      name: 'Direct',
+      name: '体育场馆',
       type: 'line',
       stack: 'Total',
       areaStyle: {},
       emphasis: {
         focus: 'series'
       },
-      data: [320, 332, 301, 334, 390, 330, 320]
+      data: [1, 0, 1, 0, 0, 1, 0]
     },
     {
-      name: 'Search Engine',
+      name: '报告厅',
       type: 'line',
       stack: 'Total',
       label: {
@@ -95,7 +106,7 @@ const options = ref({
       emphasis: {
         focus: 'series'
       },
-      data: [820, 932, 901, 934, 1290, 1330, 1320]
+      data: [1, 0, 1, 0, 0, 1, 2]
     }
   ]
 })

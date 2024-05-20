@@ -81,7 +81,7 @@
         </el-container>
       </el-main>
       <el-footer style="text-align: center;">
-        <el-button size="large">返回上级</el-button>
+        <el-button size="large" @click="toLast">返回上级</el-button>
         <el-button type="primary" size="large" @click="drawer = true" show-close=false>立即预约</el-button>
       </el-footer>
     </el-container>
@@ -120,6 +120,7 @@
 </template>
 
 <script setup lang="ts">
+import router from '@/router';
 import { ref } from 'vue'
 import { reactive } from 'vue'
 
@@ -137,6 +138,10 @@ const onSubmit = () => {
 
 const drawer = ref(false)
 const url = '/src/assets/images/bar.jpg'
+
+const toLast = () => {
+  router.push('/officeSpace')
+}
 </script>
 
 <style lang="scss" scoped>

@@ -25,7 +25,7 @@ service.interceptors.request.use(config => {
   const isToken = (config.headers || {}).isToken === false
   console.log(isToken)
 
-  const token = localStorage.getItem("token");
+  const token = sessionStorage.getItem("token");
   console.log(token);
   
   if (token && !isToken) {
