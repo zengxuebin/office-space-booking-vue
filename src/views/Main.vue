@@ -23,7 +23,7 @@
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
-            <span class="manager" @click="toManager">前往管理后台</span>
+            <span v-if="userInfo.id === 1" class="manager" @click="toManager">前往管理后台</span>
             <router-link to="/index"></router-link>
           </div>
         </div>
