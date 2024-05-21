@@ -4,43 +4,33 @@
     <el-container>
       <el-aside width="250px" class="search-aside">
         <div class="search">
-          <el-select v-model="value" size="large" style="width: 200px" :empty-values="[null]" :value-on-clear="null">
-            <el-option v-for="item in locations" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </div>
-        <div class="search">
           <h3>资源类型</h3>
-          <el-radio-group v-model="type" style="display: block;">
-            <el-radio :value="0" style="display: block;">开放式工位</el-radio>
-            <el-radio :value="1" style="display: block;">公共场馆</el-radio>
+          <el-radio-group v-model="form.categoryId" style="display: block;" @change="change">
+            <el-radio :value="1" style="display: block;">开放式工位</el-radio>
+            <el-radio :value="2" style="display: block;">公共场馆</el-radio>
           </el-radio-group>
         </div>
         <el-divider />
         <div class="search">
-          <h3>位置校区</h3>
+          <h3>位置</h3>
           <el-radio-group v-model="location">
-            <el-radio :value="1" size="large">华东交通大学-南区</el-radio>
-            <el-radio :value="2" size="large">华东交通大学-北区</el-radio>
+            <el-radio :value="1" size="large">华东交通大学</el-radio>
           </el-radio-group>
         </div>
         <el-divider />
       </el-aside>
       <el-container>
-        <el-header class="header-search">
-          <el-date-picker v-model="value1" type="date" placeholder="请选择日期" size="large" />
-          <el-input v-model="input" style="width: 240px" placeholder="请输入共享空间名称" size="large" :prefix-icon="Search" />
-        </el-header>
         <el-main class="main">
-          <space-view class="space-view" />
-          <office-space-view class="space-view" />
-          <office-space-view class="space-view" />
-          <office-space-view class="space-view" />
+          <space-view v-if="form.categoryId == 1" v-for="record in records" :key="record.id" :record="record"
+            class="space-view" />
+          <office-space-view v-if="form.categoryId == 2" v-for="record in records" :key="record.id" :record="record"
+            class="space-view" />
         </el-main>
         <el-footer>
-          <vxe-pager background v-model:current-page="pageVO2.currentPage" v-model:page-size="pageVO2.pageSize"
-            :total="pageVO2.total"
+          <vxe-pager background v-model:current-page="pageVO.currentPage" v-model:page-size="pageVO.pageSize"
+            :total="pageVO.total"
             :layouts="['Home', 'PrevJump', 'PrevPage', 'JumpNumber', 'NextPage', 'NextJump', 'End', 'Sizes', 'FullJump', 'Total']"
-            @page-change="pageChangeEvent2">
+            @page-change="change">
           </vxe-pager>
         </el-footer>
       </el-container>
@@ -52,8 +42,48 @@
 import { ref, reactive } from 'vue'
 import SpaceView from "@/components/SpaceView.vue"
 import OfficeSpaceView from "@/components/OfficeSpaceView.vue"
-import { Search } from '@element-plus/icons-vue'
 import { getLocationOption } from "@/api/option"
+import { useMenuStore } from "@/stores/menu"
+import { getPageFavorite } from '@/api/favorite'
+const store = useMenuStore()
+
+store.switchMenu(3)
+
+interface FavoriteForm {
+  categoryId: number,
+}
+
+const form = reactive<FavoriteForm>({
+  categoryId: 1
+})
+
+const records = ref([])
+
+const pageVO = reactive({
+  currentPage: 1,
+  pageSize: 10,
+  total: 100
+})
+
+// 调用方法
+const change = () => {
+  const params = {
+    pageNum: pageVO.currentPage,
+    pageSize: pageVO.pageSize,
+    entity: {
+      categoryId: form.categoryId
+    }
+  }
+  getPageFavorite(params).then(res => {
+    const data = res.data
+    console.log(data)
+    records.value = data.records
+    pageVO.total = data.total
+  })
+
+}
+
+change()
 
 const locations = ref<any[]>([])
 
@@ -62,15 +92,9 @@ getLocationOption().then(res => {
   locations.value = res.data
 })
 
-const pageVO2 = reactive({
-  currentPage: 1,
-  pageSize: 30,
-  total: 100
-})
-
 
 const pageChangeEvent2 = () => {
-  console.log(`分页事件2：第 ${pageVO2.currentPage} 页，每页  ${pageVO2.pageSize} 条`)
+  console.log(`分页事件2：第 ${pageVO.currentPage} 页，每页  ${pageVO.pageSize} 条`)
 }
 
 const value = ref('')

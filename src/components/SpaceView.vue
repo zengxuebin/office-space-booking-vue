@@ -11,7 +11,9 @@
               <span class="title">{{ record.spaceName }} &nbsp; {{ record.location }}</span>
             </el-col>
             <el-col :span="1">
-              <el-button size="large" :icon="Star" circle @click="favorite" />
+              <el-button v-if="record.favorite === false" size="large" :icon="Star" circle @click="favorite" />
+              <el-button type="primary" v-if="record.favorite === true" size="large" :icon="Star" circle
+                @click="centerDialogVisible = true" />
             </el-col>
           </el-row>
           <el-row>
@@ -30,8 +32,8 @@
             <el-col :span="15" class="tag">
               <el-tag type="info" size="large" v-for="equipment in record.equipmentList">{{ equipment }}</el-tag>
             </el-col>
-            <el-col :span="9">
-              <el-button size="large" @click="getDetail">查看详情</el-button>
+            <el-col :span="9" v-if="reserveDate == ''">
+              <el-button size="large" @click="getDetail" >查看详情</el-button>
               <el-button type="primary" size="large" @click="drawer = true">立即预约</el-button>
             </el-col>
           </el-row>
@@ -70,6 +72,18 @@
         </el-form-item>
       </el-form>
     </el-drawer>
+
+    <el-dialog v-model="centerDialogVisible" title="取消预约" width="500" align-center @closed="form.topic = ''">
+      <span>你将取消收藏该共享空间，是否继续？</span>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="calcelDialog">取消</el-button>
+          <el-button type="primary" @click="handleFavorite">
+            确认
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -83,10 +97,28 @@ import router from '@/router'
 import { PropType, onMounted, reactive, ref } from 'vue';
 import { getUserOption } from '@/api/option'
 import { reservePublicSpace } from '@/api/reserve/reserve';
+import { cancelFavoriteSpace, favoriteSpace } from '@/api/favorite';
 
 const users = ref<any[]>([])
 const userIds = ref<any[]>([])
 
+const centerDialogVisible = ref(false)
+
+const calcelDialog = () => {
+  centerDialogVisible.value = false
+  ElMessage('你取消了该操作')
+}
+
+const handleFavorite = () => {
+  cancelFavoriteSpace(record.id).then(res => {
+    centerDialogVisible.value = false
+    ElMessage({
+      message: '取消收藏成功！是不爱了吗？',
+      type: 'success',
+    })
+    record.favorite = false
+  })
+}
 
 onMounted(() => {
 
@@ -104,7 +136,7 @@ const props = defineProps({
   },
   reserveDate: {
     type: String,
-    default: ''
+    default: '2'
   },
   userOption: {
     type: Array as PropType<{ label: string; value: string }[]>,
@@ -121,6 +153,12 @@ const props = defineProps({
 })
 const record = props.record
 
+const reserveDate = props.reserveDate
+console.log('ddd');
+
+console.log(reserveDate == '');
+
+
 const startTime = props.reserveDate + ' ' + props.startTime + ':00'
 const endTime = props.reserveDate + ' ' + props.endTime + ':00'
 
@@ -131,9 +169,12 @@ const spaceOption = [
 ]
 
 const favorite = () => {
-  ElMessage({
-    message: '收藏成功！可在“我的收藏”查看和管理哦～',
-    type: 'success',
+  favoriteSpace(record.id).then(res => {
+    ElMessage({
+      message: '收藏成功！可在“我的收藏”查看和管理哦～',
+      type: 'success',
+    })
+    record.favorite = true
   })
 }
 

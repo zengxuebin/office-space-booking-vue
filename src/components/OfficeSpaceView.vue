@@ -11,7 +11,9 @@
               <span class="title">{{ record.spaceName }} &nbsp; {{ record.location }}</span>
             </el-col>
             <el-col :span="1">
-              <el-button type="primary" size="large" :icon="Star" circle @click="centerDialogVisible = true" />
+              <el-button v-if="record.favorite === false" size="large" :icon="Star" circle @click="favorite" />
+              <el-button type="primary" v-if="record.favorite === true" size="large" :icon="Star" circle
+                @click="centerDialogVisible = true" />
             </el-col>
           </el-row>
           <el-row>
@@ -33,13 +35,13 @@
             <el-col :span="15" class="tag">
               <el-tag type="info" size="large" v-for="equipment in record.equipmentList">{{ equipment }}</el-tag>
             </el-col>
-            <el-col :span="9" style="text-align: right;">
+            <el-col :span="9" style="text-align: right;" v-if="reserveDate == ''">
               <el-button type="primary" size="large" @click="reserve">立即预约</el-button>
             </el-col>
           </el-row>
         </el-main>
       </el-container>
-      <el-progress :percentage="record.usedCapacity" status="warning" :color="colors">
+      <el-progress :percentage="record.usedCapacity" status="warning" :color="colors" v-if="reserveDate == ''">
         <el-text>占座率 {{ record.occupancyRate }} %（ {{ record.occupancyDescription }} ）</el-text>
       </el-progress>
     </el-card>
@@ -94,11 +96,40 @@ import {
 } from '@element-plus/icons-vue'
 import router from '@/router'
 import { reserveOfficeSpace } from "@/api/reserve/reserve"
+import { cancelFavoriteSpace, favoriteSpace } from '@/api/favorite';
 const emits = defineEmits(['change']);
 
 const queryOfficeSpace = () => {
   emits('change');
-};
+}
+
+const centerDialogVisible = ref(false)
+
+const calcelDialog = () => {
+  centerDialogVisible.value = false
+  ElMessage('你取消了该操作')
+}
+
+const handleFavorite = () => {
+  cancelFavoriteSpace(record.id).then(res => {
+    centerDialogVisible.value = false
+    ElMessage({
+      message: '取消收藏成功！是不爱了吗？',
+      type: 'success',
+    })
+    record.favorite = false
+  })
+}
+
+const favorite = () => {
+  favoriteSpace(record.id).then(res => {
+    ElMessage({
+      message: '收藏成功！可在“我的收藏”查看和管理哦～',
+      type: 'success',
+    })
+    record.favorite = true
+  })
+}
 
 const url = '/src/assets/images/space.png'
 
@@ -128,6 +159,8 @@ const drawer = ref(false)
 const spaceOption = [
   { value: record.id, label: record.spaceName + '  ' + record.location }
 ]
+
+const reserveDate = props.reserveDate
 
 const form = reactive({
   topic: '',
@@ -169,13 +202,6 @@ const onSubmit = () => {
     })
 }
 
-const centerDialogVisible = ref(false)
-
-const calcelDialog = () => {
-  centerDialogVisible.value = false
-  ElMessage('你取消了该操作')
-}
-
 const colors = [
   { color: '#f56c6c', percentage: 100 },
   { color: '#e6a23c', percentage: 80 },
@@ -184,13 +210,6 @@ const colors = [
   { color: '#6f7ad3', percentage: 20 },
 ]
 
-const handleFavorite = () => {
-  centerDialogVisible.value = false
-  ElMessage({
-    message: '取消收藏成功！是不爱了吗？',
-    type: 'success',
-  })
-}
 
 const getDetail = () => {
   router.push('/officeSpaceDetail')
