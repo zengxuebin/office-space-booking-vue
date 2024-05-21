@@ -5,7 +5,7 @@
       <el-aside width="280px" class="search-aside">
         <div class="search">
           <el-select v-model="officeSpaceForm.locationId" size="large" style="width: 240px" placeholder="请选择区域"
-            @change="change">
+            @change="change" clearable>
             <el-option v-for="item in locations" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </div>
@@ -31,7 +31,7 @@
       <el-container>
         <el-header class="header-search">
           <el-date-picker :disabled-date="disabledDate" v-model="officeSpaceForm.reserveDate" type="date"
-            placeholder="请选择日期" size="large" @change="change" value-format="YYYY-MM-DD" />
+            placeholder="请选择日期" :clearable=false size="large" @change="change" value-format="YYYY-MM-DD" />
           <el-input v-model="officeSpaceForm.spaceName" @change="change" style="width: 240px" placeholder="请输入共享空间名称" size="large"
             :prefix-icon="Search" />
         </el-header>
