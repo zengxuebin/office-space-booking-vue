@@ -123,6 +123,10 @@
 import router from '@/router';
 import { ref } from 'vue'
 import { reactive } from 'vue'
+import { useMenuStore } from "@/stores/menu"
+const store = useMenuStore()
+
+store.switchMenu(1)
 
 // do not use same name with ref
 const form = reactive({
@@ -137,7 +141,7 @@ const onSubmit = () => {
 }
 
 const drawer = ref(false)
-const url = '/src/assets/images/bar.jpg'
+const url = '/src/assets/images/space.png'
 
 const toLast = () => {
   router.push('/officeSpace')

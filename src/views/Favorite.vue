@@ -59,10 +59,6 @@ const locations = ref<any[]>([])
 
 getLocationOption().then(res => {
   console.log(res.data)
-  res.data.push({
-    value: '',
-    label: 'All',
-  },)
   locations.value = res.data
 })
 

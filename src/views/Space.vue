@@ -4,7 +4,7 @@
     <el-container>
       <el-aside width="280px" class="search-aside">
         <div class="search">
-          <el-select v-model="value" size="large" style="width: 240px" :empty-values="[null]" :value-on-clear="null">
+          <el-select v-model="value" size="large" style="width: 240px" placeholder="请选择区域">
             <el-option v-for="item in locations" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </div>
@@ -67,12 +67,23 @@ import { getLocationOption } from "@/api/option"
 
 const locations = ref<any[]>([])
 
+interface SpaceForm {
+  id: string,
+  dictName: string,
+  dictType: string,
+  dictValue: string,
+  dictLabel: string,
+}
+
+const dictForm = reactive<SpaceForm>({
+  id: '',
+  dictName: '',
+  dictType: '',
+  dictValue: '',
+  dictLabel: '',
+})
+
 getLocationOption().then(res => {
-  console.log(res.data)
-  res.data.push({
-    value: '',
-    label: 'All',
-  },)
   locations.value = res.data
 })
 

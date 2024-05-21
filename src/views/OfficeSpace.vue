@@ -4,56 +4,46 @@
     <el-container>
       <el-aside width="280px" class="search-aside">
         <div class="search">
-          <el-select v-model="value" size="large" style="width: 240px" :empty-values="[null]" :value-on-clear="null">
+          <el-select v-model="officeSpaceForm.locationId" size="large" style="width: 240px" placeholder="请选择区域"
+            @change="change">
             <el-option v-for="item in locations" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </div>
         <el-divider />
         <div class="search">
-          <h3>位置校区</h3>
+          <h3>所属</h3>
           <el-radio-group v-model="location">
-            <el-radio :value="1" size="large">华东交通大学-南区</el-radio>
-            <el-radio :value="2" size="large">华东交通大学-北区</el-radio>
+            <el-radio :value="1" size="large">华东交通大学</el-radio>
           </el-radio-group>
         </div>
         <el-divider />
         <div class="search">
           <h3>可容纳人数</h3>
-          <el-radio-group v-model="radio" style="display: block;">
-            <el-radio :value="1" style="display: block;">10人以下</el-radio>
-            <el-radio :value="2" style="display: block;">11-50人</el-radio>
-            <el-radio :value="3" style="display: block;">51-100人</el-radio>
-            <el-radio :value="4" style="display: block;">101-150人</el-radio>
-            <el-radio :value="5" >151-200人</el-radio>
+          <el-radio-group v-model="officeSpaceForm.capacity" style="display: block;" @change="change">
+            <el-radio value="1" style="display: block;">10人以下</el-radio>
+            <el-radio value="2" style="display: block;">11-50人</el-radio>
+            <el-radio value="3" style="display: block;">51-100人</el-radio>
+            <el-radio value="4" style="display: block;">101-150人</el-radio>
+            <el-radio value="5" style="display: block;">151-200人</el-radio>
           </el-radio-group>
         </div>
       </el-aside>
       <el-container>
         <el-header class="header-search">
-          <el-date-picker v-model="value1" type="date" placeholder="请选择日期" size="large" />
-          <el-input v-model="input" style="width: 240px" placeholder="请输入共享空间名称" size="large" :prefix-icon="Search" />
+          <el-date-picker :disabled-date="disabledDate" v-model="officeSpaceForm.reserveDate" type="date"
+            placeholder="请选择日期" size="large" @change="change" value-format="YYYY-MM-DD" />
+          <el-input v-model="officeSpaceForm.spaceName" @change="change" style="width: 240px" placeholder="请输入共享空间名称" size="large"
+            :prefix-icon="Search" />
         </el-header>
         <el-main class="main">
-          <div style="margin-bottom: 20px;">
-            <el-segmented v-model="choose" :options="freeOptions" block=true>
-              <template #default="{ item }">
-                <div class="options">
-                  <span>{{ item.label }}</span>
-                  <div><span class="num">{{ item.num }}</span>间</div>
-                </div>
-              </template>
-            </el-segmented>
-          </div>
-          <office-space-view class="space-view" />
-          <office-space-view class="space-view" />
-          <office-space-view class="space-view" />
-          <office-space-view class="space-view" />
+          <office-space-view class="space-view" v-for="record in records" :key="record.id" :record="record"
+            :reserve-date="officeSpaceForm.reserveDate" :userOption="userOption" @change="change" />
         </el-main>
         <el-footer>
-          <vxe-pager background v-model:current-page="pageVO2.currentPage" v-model:page-size="pageVO2.pageSize"
-            :total="pageVO2.total"
+          <vxe-pager background v-model:current-page="pageVO.currentPage" v-model:page-size="pageVO.pageSize"
+            :total="pageVO.total"
             :layouts="['Home', 'PrevJump', 'PrevPage', 'JumpNumber', 'NextPage', 'NextJump', 'End', 'Sizes', 'FullJump', 'Total']"
-            @page-change="pageChangeEvent2">
+            @pageChange="change">
           </vxe-pager>
         </el-footer>
       </el-container>
@@ -66,27 +56,91 @@ import { ref, reactive } from 'vue'
 import OfficeSpaceView from "@/components/OfficeSpaceView.vue"
 import { Search } from '@element-plus/icons-vue'
 import { getLocationOption } from "@/api/option"
+import { useMenuStore } from "@/stores/menu"
+import { getPageOfficeSpace } from "@/api/reserve/officeSpace"
+import { getCurrentDate } from '@/utils/dateUtil'
+import { getInfo } from '@/api/login'
+import router from '@/router'
+
+const userInfo = reactive({
+  id: 1,
+  username: 'caolonghui',
+})
+
+const userOption = ref([])
+
+getInfo().then(res => {
+  const userDTO = res.data.sysUserDTO
+  userInfo.id = userDTO.id
+  userInfo.username = userDTO.username
+  userOption.value.push({ label: userInfo.username, value: userInfo.id },)
+})
+
+const store = useMenuStore()
+
+store.switchMenu(1)
+
+interface OfficeSpaceForm {
+  locationId: string,
+  reserveDate: string,
+  spaceName: string,
+  capacity: string,
+}
+
+const records = ref([])
+
+const officeSpaceForm = reactive<OfficeSpaceForm>({
+  locationId: '',
+  reserveDate: getCurrentDate(),
+  spaceName: '',
+  capacity: '3'
+})
+
+const pageVO = reactive({
+  currentPage: 1,
+  pageSize: 10,
+  total: 100
+})
+
+// 请求参数
+
+// 调用方法
+const change = () => {
+  const params = {
+    pageNum: pageVO.currentPage,
+    pageSize: pageVO.pageSize,
+    entity: {
+      locationId: officeSpaceForm.locationId,
+      reserveDate: officeSpaceForm.reserveDate,
+      spaceName: officeSpaceForm.spaceName,
+      capacity: officeSpaceForm.capacity
+    }
+  }
+  console.log(params);
+  getPageOfficeSpace(params).then(res => {
+    const data = res.data
+    console.log(data)
+    records.value = data.records
+    pageVO.total = data.total
+  })
+}
+
+change()
+
+const disabledDate = (date: { getTime: () => number }) => {
+  return date.getTime() < new Date().getTime() - 24 * 60 * 60 * 1000
+}
 
 const locations = ref<any[]>([])
 
 getLocationOption().then(res => {
   console.log(res.data)
-  res.data.push({
-    value: '',
-    label: 'All',
-  },)
   locations.value = res.data
-})
-
-const pageVO2 = reactive({
-  currentPage: 1,
-  pageSize: 30,
-  total: 100
 })
 
 
 const pageChangeEvent2 = () => {
-  console.log(`分页事件2：第 ${pageVO2.currentPage} 页，每页  ${pageVO2.pageSize} 条`)
+  console.log(`分页事件2：第 ${pageVO.currentPage} 页，每页  ${pageVO.pageSize} 条`)
 }
 
 const value = ref('')
@@ -100,28 +154,10 @@ const input = ref('')
 
 const choose = ref('')
 
-const freeOptions = [
-  {
-    label: '全部',
-    value: '',
-    num: 12,
-  },
-  {
-    label: '空闲',
-    value: '1',
-    num: 0,
-  },
-  {
-    label: '忙碌',
-    value: '2',
-    num: 0,
-  },
-  {
-    label: '拥挤',
-    value: '3',
-    num: 0,
-  },
-]
+
+function resolve(arg0: { records: any; total: any }) {
+  throw new Error('Function not implemented.')
+}
 </script>
 
 <style lang="scss" scoped>
