@@ -230,3 +230,16 @@ export function getIntermediateDate(startDate: string, endDate: any, num: any, d
   }
   return daysArray
 }
+
+export function addHoursToDate(startTimeStr: string, hoursToAdd: number): string {
+  // 使用dayjs解析时间字符串
+  const startTime = dayjs(startTimeStr, 'HH:mm')
+  console.log(startTime)
+
+  // 添加指定的小时数
+  const endTime = startTime.add(hoursToAdd, 'hour');
+
+  // 返回格式化的结果时间字符串
+  return endTime.format('HH:mm');
+}
+

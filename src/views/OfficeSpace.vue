@@ -32,8 +32,8 @@
         <el-header class="header-search">
           <el-date-picker :disabled-date="disabledDate" v-model="officeSpaceForm.reserveDate" type="date"
             placeholder="请选择日期" :clearable=false size="large" @change="change" value-format="YYYY-MM-DD" />
-          <el-input v-model="officeSpaceForm.spaceName" @change="change" style="width: 240px" placeholder="请输入共享空间名称" size="large"
-            :prefix-icon="Search" />
+          <el-input v-model="officeSpaceForm.spaceName" @blur="change" style="width: 240px" placeholder="请输入共享空间名称"
+            size="large" :prefix-icon="Search" clearable @clear="change" />
         </el-header>
         <el-main class="main">
           <office-space-view class="space-view" v-for="record in records" :key="record.id" :record="record"
@@ -52,15 +52,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, nextTick } from 'vue'
 import OfficeSpaceView from "@/components/OfficeSpaceView.vue"
 import { Search } from '@element-plus/icons-vue'
 import { getLocationOption } from "@/api/option"
-import { useMenuStore } from "@/stores/menu"
 import { getPageOfficeSpace } from "@/api/reserve/officeSpace"
 import { getCurrentDate } from '@/utils/dateUtil'
 import { getInfo } from '@/api/login'
-import router from '@/router'
+import { useMenuStore } from "@/stores/menu"
 
 const userInfo = reactive({
   id: 1,
@@ -106,6 +105,8 @@ const pageVO = reactive({
 
 // 调用方法
 const change = () => {
+  console.log('ddd');
+  console.log(officeSpaceForm.reserveDate);
   const params = {
     pageNum: pageVO.currentPage,
     pageSize: pageVO.pageSize,
@@ -116,7 +117,6 @@ const change = () => {
       capacity: officeSpaceForm.capacity
     }
   }
-  console.log(params);
   getPageOfficeSpace(params).then(res => {
     const data = res.data
     console.log(data)
@@ -154,10 +154,6 @@ const input = ref('')
 
 const choose = ref('')
 
-
-function resolve(arg0: { records: any; total: any }) {
-  throw new Error('Function not implemented.')
-}
 </script>
 
 <style lang="scss" scoped>

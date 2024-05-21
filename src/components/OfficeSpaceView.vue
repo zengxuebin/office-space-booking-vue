@@ -45,7 +45,7 @@
     </el-card>
 
 
-    <el-dialog v-model="centerDialogVisible" title="取消预约" width="500" align-center>
+    <el-dialog v-model="centerDialogVisible" title="取消预约" width="500" align-center @closed="form.topic = ''">
       <span>你将取消收藏该共享空间，是否继续？</span>
       <template #footer>
         <div class="dialog-footer">
@@ -116,13 +116,12 @@ const props = defineProps({
     default: () => [{ label: '', value: '' }],
   }
 })
+const record = props.record
 
-const startTime =  props.reserveDate + ' 00:00:00'
+const startTime = props.reserveDate + ' 00:00:00'
 const endTime = props.reserveDate + ' 23:59:59'
 
-console.log(props.userOption);
-
-const record = props.record
+console.log(props.userOption)
 
 const drawer = ref(false)
 
