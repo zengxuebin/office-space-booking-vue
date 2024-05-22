@@ -32,7 +32,7 @@
             <el-col :span="15" class="tag">
               <el-tag type="info" size="large" v-for="equipment in record.equipmentList">{{ equipment }}</el-tag>
             </el-col>
-            <el-col :span="9" v-if="reserveDate == ''">
+            <el-col :span="9" v-if="compoentFavorite">
               <el-button size="large" @click="getDetail" >查看详情</el-button>
               <el-button type="primary" size="large" @click="drawer = true">立即预约</el-button>
             </el-col>
@@ -73,7 +73,7 @@
       </el-form>
     </el-drawer>
 
-    <el-dialog v-model="centerDialogVisible" title="取消预约" width="500" align-center @closed="form.topic = ''">
+    <el-dialog v-model="centerDialogVisible" title="取消收藏" width="500" align-center @closed="form.topic = ''">
       <span>你将取消收藏该共享空间，是否继续？</span>
       <template #footer>
         <div class="dialog-footer">
@@ -150,7 +150,13 @@ const props = defineProps({
     type: String,
     default: ''
   },
+  compoentFavorite: {
+    type: Boolean,
+    default: true,
+  }
 })
+
+const compoentFavorite = props.compoentFavorite
 const record = props.record
 
 const reserveDate = props.reserveDate

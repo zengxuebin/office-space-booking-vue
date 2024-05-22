@@ -8,7 +8,6 @@
           <el-radio-group v-model="radio" style="display: block;">
             <el-radio :value="0" size="large" style="display: block;">预约成功</el-radio>
             <el-radio :value="4" size="large" style="display: block;">已取消</el-radio>
-            <el-radio :value="5" size="large" style="display: block;">已结束</el-radio>
           </el-radio-group>
         </div>
       </el-aside>

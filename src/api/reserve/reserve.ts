@@ -23,3 +23,14 @@ export const reservePublicSpace = (data: any) => {
     data
   })
 }
+
+/**
+ * 取消预约
+ * @returns 是否成功
+ */
+export const cancelReserve = (id: any) => {
+  return request({
+    method: 'post',
+    url: '/reserve/space/cancel/' + id,
+  })
+}

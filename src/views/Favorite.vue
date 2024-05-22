@@ -22,9 +22,9 @@
       <el-container>
         <el-main class="main">
           <space-view v-if="form.categoryId == 2" v-for="record in records" :key="record.id" :record="record"
-            class="space-view" />
+            :compoentFavorite="false" class="space-view" />
           <office-space-view v-if="form.categoryId == 1" v-for="record in records" :key="record.id" :record="record"
-            class="space-view" />
+            :compoentFavorite="false" class="space-view" />
         </el-main>
         <el-footer>
           <vxe-pager background v-model:current-page="pageVO.currentPage" v-model:page-size="pageVO.pageSize"

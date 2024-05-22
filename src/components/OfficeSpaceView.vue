@@ -35,19 +35,19 @@
             <el-col :span="15" class="tag">
               <el-tag type="info" size="large" v-for="equipment in record.equipmentList">{{ equipment }}</el-tag>
             </el-col>
-            <el-col :span="9" style="text-align: right;" v-if="reserveDate == ''">
+            <el-col :span="9" style="text-align: right;" v-if="compoentFavorite">
               <el-button type="primary" size="large" @click="reserve">立即预约</el-button>
             </el-col>
           </el-row>
         </el-main>
       </el-container>
-      <el-progress :percentage="record.usedCapacity" status="warning" :color="colors" v-if="reserveDate == ''">
+      <el-progress :percentage="record.usedCapacity" status="warning" :color="colors" v-if="compoentFavorite">
         <el-text>占座率 {{ record.occupancyRate }} %（ {{ record.occupancyDescription }} ）</el-text>
       </el-progress>
     </el-card>
 
 
-    <el-dialog v-model="centerDialogVisible" title="取消预约" width="500" align-center @closed="form.topic = ''">
+    <el-dialog v-model="centerDialogVisible" title="取消收藏" width="500" align-center @closed="form.topic = ''">
       <span>你将取消收藏该共享空间，是否继续？</span>
       <template #footer>
         <div class="dialog-footer">
@@ -145,9 +145,14 @@ const props = defineProps({
   userOption: {
     type: Array as PropType<{ label: string; value: string }[]>,
     default: () => [{ label: '', value: '' }],
+  },
+  compoentFavorite: {
+    type: Boolean,
+    default: true,
   }
 })
 const record = props.record
+const compoentFavorite = props.compoentFavorite
 
 const startTime = props.reserveDate + ' 00:00:00'
 const endTime = props.reserveDate + ' 23:59:59'
