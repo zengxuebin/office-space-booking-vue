@@ -96,7 +96,7 @@ const gridOptions = reactive<VxeGridProps>({
       {
         field: 'accountName',
         title: '账户名称',
-        span: 8,
+        span: 6,
         itemRender: {
           name: '$input',
           props: {
@@ -107,7 +107,7 @@ const gridOptions = reactive<VxeGridProps>({
       {
         field: 'user_id',
         title: '所属用户',
-        span: 8,
+        span: 6,
         itemRender: {
           name: '$select',
           options: [],
@@ -119,7 +119,7 @@ const gridOptions = reactive<VxeGridProps>({
       {
         field: 'status',
         title: '账户状态',
-        span: 8,
+        span: 6,
         itemRender: {
           name: '$select',
           options: [],
@@ -130,7 +130,7 @@ const gridOptions = reactive<VxeGridProps>({
       },
       // 功能
       {
-        span: 8,
+        span: 6,
         align: 'center',
         itemRender: {
           name: '$buttons', children: [

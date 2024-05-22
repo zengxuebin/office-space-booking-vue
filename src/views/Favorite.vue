@@ -21,9 +21,9 @@
       </el-aside>
       <el-container>
         <el-main class="main">
-          <space-view v-if="form.categoryId == 1" v-for="record in records" :key="record.id" :record="record"
+          <space-view v-if="form.categoryId == 2" v-for="record in records" :key="record.id" :record="record"
             class="space-view" />
-          <office-space-view v-if="form.categoryId == 2" v-for="record in records" :key="record.id" :record="record"
+          <office-space-view v-if="form.categoryId == 1" v-for="record in records" :key="record.id" :record="record"
             class="space-view" />
         </el-main>
         <el-footer>

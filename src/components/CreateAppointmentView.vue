@@ -3,16 +3,17 @@
     <el-card style="width: 100%;">
       <el-container>
         <el-header>
-          <h3>预约验证</h3>
+          <h3>{{ record.topic }}</h3>
         </el-header>
         <el-main>
           <el-row>
             <el-col :span="21">
-              <div style="margin-bottom: 20px;">时间：2024-05-01 12:12:12 ～ 2024-05-02 12:12:12</div>
-              <div>地点：华东交通大学-北区-软件学院-3F-403-会议室</div>
+              <div style="margin-bottom: 20px;">时间：{{ record.startTime }} ～ {{ record.endTime }}</div>
+              <div>地点：{{ record.location }}</div>
             </el-col>
             <el-col :span="3">
-              <el-text type="danger" size="large">审批未通过</el-text>
+              <el-text type="success" v-if="record.status == '审核通过'" size="large">审核通过</el-text>
+              <el-text type="info" v-if="record.status == '无需审核'" size="large">无需审核</el-text>
             </el-col>
           </el-row>
         </el-main>
@@ -22,8 +23,15 @@
 </template>
 
 <script setup lang="ts">
-const url = '/src/assets/images/bar.jpg'
+import { ref } from 'vue';
 
+const props = defineProps({
+  record: {
+    type: Object,
+    default: {}
+  },
+})
+const record = ref(props.record)
 </script>
 
 <style lang="scss" scoped>
