@@ -5,6 +5,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import echarts from '@/components/echarts/Index.vue'
+import { getMyCreditScore } from '@/api/creditScore';
+
+const creditScore = ref(0)
+getMyCreditScore().then(res => {
+  creditScore.value = res.data.score / 100
+})
 
 const options = ref({
 series: [
@@ -84,7 +90,7 @@ series: [
     },
     data: [
       {
-        value: 1,
+        value: creditScore,
         name: '信誉分'
       }
     ]

@@ -19,6 +19,7 @@
                   <el-dropdown-item :icon="Star" command="toFavorute">我的收藏</el-dropdown-item>
                   <el-dropdown-item :icon="Position" command="toCreateAppointment">我发起的预约</el-dropdown-item>
                   <el-dropdown-item :icon="CircleCheck" command="toPendingAppointment">我收到的邀约</el-dropdown-item>
+                  <el-dropdown-item :icon="SetUp" command="toCreditScore">我的信誉分</el-dropdown-item>
                   <el-dropdown-item :icon="SwitchButton" command="toLogin">退出登录</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -57,6 +58,8 @@ const handleCommand = (command: string) => {
     router.push('/createAppointment')
   } else if (command === 'toPendingAppointment') {
     router.push('/pendingAppointment')
+  } else if(command === 'toCreditScore') {
+    router.push('/myCreditScore')
   } else {
     router.push('/login')
   }
@@ -68,6 +71,7 @@ import {
   Star,
   CircleCheck,
   Position,
+  SetUp,
   SwitchButton
 } from '@element-plus/icons-vue'
 import { getInfo } from '@/api/login';

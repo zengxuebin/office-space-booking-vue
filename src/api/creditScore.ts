@@ -11,3 +11,15 @@ export const getCreditScorePage = (data: any) => {
     data
   })
 }
+
+ /**
+ * 获取我的信誉分
+ * 
+ * @returns 信誉分信息
+ */
+export const getMyCreditScore = () => {
+  return request({
+    method: 'get',
+    url: '/creditScore/myCredit'
+  })
+}

@@ -15,7 +15,8 @@
 
 <script setup lang="ts">
 import CreditScoreView from '@/components/CreditScoreView.vue'
-import CreditScoreChangeView from "@/components/CreditScoreChangeView.vue";
+import CreditScoreChangeView from "@/components/CreditScoreChangeView.vue"
+
 </script>
 
 <style lang="scss" scoped></style>

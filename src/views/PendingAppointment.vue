@@ -5,24 +5,24 @@
       <el-aside width="250px" class="search-aside">
         <div class="search">
           <h3>预约状态</h3>
-          <el-radio-group v-model="radio" style="display: block;">
-            <el-radio :value="0" size="large" style="display: block;">预约成功</el-radio>
-            <el-radio :value="4" size="large" style="display: block;">已取消</el-radio>
+          <el-radio-group v-model="form.status" style="display: block;" @change="change">
+            <el-radio :value="0" size="large" style="display: block;">待确认</el-radio>
+            <el-radio :value="-1" size="large" style="display: block;">已拒绝</el-radio>
+            <el-radio :value="1" size="large" style="display: block;">已确认</el-radio>
+            <el-radio :value="-2" size="large" style="display: block;">已取消</el-radio>
           </el-radio-group>
         </div>
       </el-aside>
       <el-container>
         <el-main class="main">
-          <pending-appointment-view class="space-view"></pending-appointment-view>
-          <pending-appointment-view class="space-view"></pending-appointment-view>
-          <pending-appointment-view class="space-view"></pending-appointment-view>
-          <pending-appointment-view class="space-view"></pending-appointment-view>
+          <pending-appointment-view class="space-view" v-for="record in records" :key="record.id"
+            :record="record"></pending-appointment-view>
         </el-main>
         <el-footer>
-          <vxe-pager background v-model:current-page="pageVO2.currentPage" v-model:page-size="pageVO2.pageSize"
-            :total="pageVO2.total"
+          <vxe-pager background v-model:current-page="pageVO.currentPage" v-model:page-size="pageVO.pageSize"
+            :total="pageVO.total"
             :layouts="['Home', 'PrevJump', 'PrevPage', 'JumpNumber', 'NextPage', 'NextJump', 'End', 'Sizes', 'FullJump', 'Total']"
-            @page-change="pageChangeEvent2">
+            @page-change="change">
           </vxe-pager>
         </el-footer>
       </el-container>
@@ -33,26 +33,51 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import PendingAppointmentView from "@/components/PendingAppointmentView.vue"
+import { useMenuStore } from "@/stores/menu"
+import { getPageReserved } from '@/api/reserve/createReserve'
+const store = useMenuStore()
 
-const pageVO2 = reactive({
+store.switchMenu(3)
+
+interface FavoriteForm {
+  status: number,
+}
+
+const form = reactive<FavoriteForm>({
+  status: 0
+})
+
+const pageVO = reactive({
   currentPage: 1,
-  pageSize: 30,
+  pageSize: 10,
   total: 100
 })
 
+const records = ref([])
 
-const pageChangeEvent2 = () => {
-  console.log(`分页事件2：第 ${pageVO2.currentPage} 页，每页  ${pageVO2.pageSize} 条`)
+// 调用方法
+const change = () => {
+  const params = {
+    pageNum: pageVO.currentPage,
+    pageSize: pageVO.pageSize,
+    entity: {
+      status: form.status
+    }
+  }
+  getPageReserved(params).then(res => {
+    const data = res.data
+    console.log(data)
+    records.value = data.records
+    pageVO.total = data.total
+  })
 }
 
-const radio = ref(3)
+change()
 
-const value1 = ref('2024-03-03')
 
-const input = ref('')
-
-const startTime = ref('9:00')
-const endTime = ref('12:00')
+const pageChangeEvent2 = () => {
+  console.log(`分页事件2：第 ${pageVO.currentPage} 页，每页  ${pageVO.pageSize} 条`)
+}
 </script>
 
 <style lang="scss" scoped>

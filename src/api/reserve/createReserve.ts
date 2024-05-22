@@ -11,3 +11,15 @@ export const getPageReserveCreate = (data: any) => {
     data
   })
 }
+
+/**
+ * 分页获取我收到的邀约
+ * @returns 分页我收到的邀约
+ */
+export const getPageReserved = (data: any) => {
+  return request({
+    method: 'post',
+    url: '/reserved/page',
+    data
+  })
+}

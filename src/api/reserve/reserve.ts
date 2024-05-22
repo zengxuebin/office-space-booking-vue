@@ -34,3 +34,25 @@ export const cancelReserve = (id: any) => {
     url: '/reserve/space/cancel/' + id,
   })
 }
+
+/**
+ * 同意邀约
+ * @returns 是否成功
+ */
+export const approveReserve = (id: any) => {
+  return request({
+    method: 'post',
+    url: '/reserved/approve/' + id,
+  })
+}
+
+/**
+ * 拒绝邀约
+ * @returns 是否成功
+ */
+export const rejectReserve = (id: any) => {
+  return request({
+    method: 'post',
+    url: '/reserved/reject/' + id,
+  })
+}
