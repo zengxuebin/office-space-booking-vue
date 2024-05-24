@@ -19,6 +19,8 @@
               <el-text type="warning" v-if="record.status == '用户取消'" size="large">已取消</el-text>
               <el-button v-if="record.status == '审核通过'" style="margin-left: 20px;" type="danger" size="large"
                 @click="cancel">取消</el-button>
+              <el-button v-if="record.status == '无需审核'" style="margin-left: 20px;" type="danger" size="large"
+                @click="cancel">取消</el-button>
             </el-col>
           </el-row>
         </el-main>
