@@ -42,7 +42,7 @@
       </div>
       <!--  底部  -->
       <div class="el-login-footer">
-        <span>Copyright © 2023 ecjtu-software All Rights Reserved.</span>
+        <span>Copyright © 2024 ecjtu-software All Rights Reserved.</span>
       </div>
     </el-main>
   </el-container>
